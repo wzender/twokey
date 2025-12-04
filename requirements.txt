@@ -1,4 +1,4 @@
-fastapi
-twilio
-uvicorn
-python-multipart
+flask
+requests
+google-generativeai
+python-dotenv
