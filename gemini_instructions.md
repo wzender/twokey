@@ -8,7 +8,7 @@ The bot acts as a language tutor. It gives the user a sentence in Hebrew, waits 
 ## **2\. Tech Stack**
 
 * **Language:** Python 3.10+  
-* **Web Framework:** Flask (to handle Webhooks)  
+* **Web Framework:**  Fast api (to handle Webhooks)  
 * **AI Model:** Google Gemini 1.5 Flash (via google-generativeai SDK)  
 * **Messaging Platform:** WhatsApp Cloud API (Meta)  
 * **Audio Handling:** Standard requests library to download WhatsApp media.  
