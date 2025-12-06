@@ -133,4 +133,4 @@ if __name__ == "__main__":
     # Run the combined FastAPI + Dash app to ensure /api/analyze is available.
     import uvicorn
 
-    uvicorn.run("main:server", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:server", host="0.0.0.0", port=10000, reload=True)

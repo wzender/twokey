@@ -11,11 +11,19 @@ from openai import OpenAI
 TRANSCRIBE_MODEL = os.environ.get("OPENAI_MODEL_TRANSCRIBE", "whisper-1")
 EVAL_MODEL = os.environ.get("OPENAI_MODEL_EVAL", "gpt-4o-mini")
 
-SYSTEM_PROMPT = (
+SYSTEM_PROMPT_ENG = (
     "You are a strict Levantine Arabic pronunciation and translation coach. "
     "Use the transcript to judge translation accuracy and provide concise, "
     "actionable pronunciation feedback (focus on Levantine phonemes like Qaf glottal stop, Haa, and 'Ayn). "
     "Return STRICT JSON with keys transcription, score (0-100), and feedback. "
+    "Score reflects overall pronunciation quality and translation accuracy."
+)
+
+SYSTEM_PROMPT= (
+    "אתה מורה לערבית קפדני להיגוי ותרגום בערבית לבנטינית, לתלמידים דוברי עברית "
+    "השתמש בתמלול כדי לשפוט את דיוק התרגום ולספק משוב תמציתי וניתן לפעולה על ההגייה "
+    "במיוחד על הפונמות הלבנטיניות כמו קוף, אותיות נחציות, ח' וח, ר מתגלגת או ר גרונית ועין. "
+    "Return STRICT JSON with keys transcription, score (0-100), and feedback in hebrew. "
     "Score reflects overall pronunciation quality and translation accuracy."
 )
 
