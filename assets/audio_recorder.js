@@ -217,18 +217,14 @@
         }
 
         try {
+          // Do not autoplay to satisfy browser policies; wait for user click on play.
+          state.pendingSpeech = data.feedback;
+          setStatus("מוכן לניגון. לחצו על \"נגן משוב קולי\".");
           if (!state.userActivatedAudio) {
-            setStatus("לחצו והחזיקו שוב כדי לאפשר ניגון קולי.");
             return window.dash_clientside.no_update;
           }
-
-          if (state.voicesReady || window.speechSynthesis.getVoices().length > 0) {
-            state.voicesReady = true;
-            speakHebrew(data.feedback);
-          } else {
-            state.pendingSpeech = data.feedback;
-            window.speechSynthesis.getVoices(); // Trigger loading.
-          }
+          // If user already interacted, we can preload voices for faster play.
+          window.speechSynthesis.getVoices();
         } catch (err) {
           console.error("Speech synthesis failed", err); // eslint-disable-line no-console
         }

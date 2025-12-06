@@ -73,6 +73,7 @@ app.layout = html.Div(
                     children=[
                         html.H2("תוצאות"),
                         html.Div(id="transcription-output", className="result-line"),
+                        html.Div(id="compare-output", className="result-line"),
                         html.Div(id="score-output", className="result-line"),
                         html.Div(id="feedback-output", className="result-line"),
                         html.Button("נגן משוב קולי", id="play-feedback-btn", className="ghost"),
@@ -135,23 +136,26 @@ def set_phrase(n_clicks):
 @app.callback(
     [
         Output("transcription-output", "children"),
+        Output("compare-output", "children"),
         Output("score-output", "children"),
         Output("feedback-output", "children"),
         Output("output-status", "children"),
     ],
     Input("api-response-store", "data"),
+    State("current-phrase-store", "data"),
 )
-def update_output(data):
+def update_output(data, phrase_data):
     if data is None:
-        return "", "", "", "לחצו והחזיקו להקלטה כדי להתחיל."
+        return "", "", "", "", "לחצו והחזיקו להקלטה כדי להתחיל."
 
     if "error" in data:
-        return "", "", "", f"שגיאה: {data['error']}"
+        return "", "", "", "", f"שגיאה: {data['error']}"
 
     transcription = data.get("transcription") or ""
     feedback = data.get("feedback") or ""
     translation_score = data.get("translation_score") or data.get("score") or 0
     pronunciation_score = data.get("pronunciation_score") or data.get("score") or 0
+    target_translit = (phrase_data or {}).get("arabic_transliteration") or ""
 
     def score_pill(label, icon, score_val):
         pct = max(0, min(int(score_val), 100))
@@ -180,8 +184,28 @@ def update_output(data):
         ],
     )
 
+    compare_block = html.Div(
+        className="compare-block",
+        children=[
+            html.Div(
+                className="compare-row",
+                children=[
+                    html.Span("תעתיק יעד", className="compare-label"),
+                    html.Span(target_translit or "—", className="compare-text"),
+                ],
+            ),
+            html.Div(
+                className="compare-row",
+                children=[
+                    html.Span("תעתיק משתמש", className="compare-label"),
+                    html.Span(transcription or "—", className="compare-text"),
+                ],
+            ),
+        ],
+    )
+
     # We rely on client-side TTS for audio; still show text for clarity.
-    return f"תמלול: {transcription}", score_block, f"משוב: {feedback}", "מנגן משוב קולי בעברית..."
+    return f"תמלול: {transcription}", compare_block, score_block, f"משוב: {feedback}", "מוכן לניגון קולי."
 
 
 
