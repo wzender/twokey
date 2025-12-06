@@ -7,6 +7,9 @@
     resolve: null,
     reject: null,
     phraseData: null,
+    voicesReady: false,
+    pendingSpeech: null,
+    userActivatedAudio: false,
   };
 
   const setStatus = (text) => {
@@ -28,6 +31,37 @@
     if (state.recorder && state.recorder.state !== "inactive") {
       state.recorder.stop();
     }
+  };
+
+  const pickHebrewVoice = () => {
+    if (!window.speechSynthesis) return null;
+    const voices = window.speechSynthesis.getVoices() || [];
+    return (
+      voices.find((v) => v.lang && v.lang.toLowerCase().startsWith("he")) ||
+      voices.find((v) => v.lang && v.lang.toLowerCase().includes("he-il")) ||
+      voices.find((v) => v.lang && v.lang.toLowerCase().startsWith("en")) ||
+      voices[0] ||
+      null
+    );
+  };
+
+  const speakHebrew = (text) => {
+    if (!window.speechSynthesis || !text) return;
+    try {
+      window.speechSynthesis.resume();
+    } catch (e) {
+      /* ignore */
+    }
+    const utterance = new SpeechSynthesisUtterance(String(text));
+    utterance.lang = "he-IL";
+    utterance.rate = 0.95;
+    utterance.pitch = 1.0;
+    const voice = pickHebrewVoice();
+    if (voice) {
+      utterance.voice = voice;
+    }
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
   };
 
   const startRecording = async () => {
@@ -113,6 +147,15 @@
 
     button.addEventListener("pointerdown", (e) => {
       e.preventDefault();
+      state.userActivatedAudio = true;
+      if (window.speechSynthesis) {
+        try {
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.resume();
+        } catch (err) {
+          /* ignore */
+        }
+      }
       startRecording().catch((err) => {
         cleanup();
         state.recordPromise = null;
@@ -128,6 +171,16 @@
 
     state.setup = true;
   };
+
+  if (window.speechSynthesis) {
+    window.speechSynthesis.onvoiceschanged = () => {
+      state.voicesReady = true;
+      if (state.pendingSpeech) {
+        speakHebrew(state.pendingSpeech);
+        state.pendingSpeech = null;
+      }
+    };
+  }
 
   document.addEventListener("DOMContentLoaded", () => {
     attachListeners();
@@ -157,6 +210,82 @@
         }
 
         return { error: "Press and hold the record button to start." };
+      },
+      speakFeedback: function (data) {
+        if (!data || !data.feedback || !window.speechSynthesis) {
+          return window.dash_clientside.no_update;
+        }
+
+        try {
+          if (!state.userActivatedAudio) {
+            setStatus("Tap and hold record again to enable audio playback.");
+            return window.dash_clientside.no_update;
+          }
+
+          if (state.voicesReady || window.speechSynthesis.getVoices().length > 0) {
+            state.voicesReady = true;
+            speakHebrew(data.feedback);
+          } else {
+            state.pendingSpeech = data.feedback;
+            window.speechSynthesis.getVoices(); // Trigger loading.
+          }
+        } catch (err) {
+          console.error("Speech synthesis failed", err); // eslint-disable-line no-console
+        }
+
+        return Date.now().toString();
+      },
+      playFeedback: function (nClicks, data) {
+        if (!nClicks || !data || !data.feedback || !window.speechSynthesis) {
+          return window.dash_clientside.no_update;
+        }
+        try {
+          state.userActivatedAudio = true;
+          if (state.voicesReady || window.speechSynthesis.getVoices().length > 0) {
+            state.voicesReady = true;
+            speakHebrew(data.feedback);
+          } else {
+            state.pendingSpeech = data.feedback;
+            window.speechSynthesis.getVoices();
+          }
+        } catch (err) {
+          console.error("Speech synthesis failed", err); // eslint-disable-line no-console
+        }
+        return Date.now().toString();
+      },
+      downloadFeedback: async function (nClicks, data) {
+        if (!nClicks || !data || !data.feedback) {
+          return window.dash_clientside.no_update;
+        }
+
+        try {
+          const response = await fetch("/api/tts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: data.feedback }),
+          });
+
+          if (!response.ok) {
+            setStatus("Unable to download audio feedback.");
+            return window.dash_clientside.no_update;
+          }
+
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "feedback-hebrew.mp3";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          setStatus("Downloaded feedback audio.");
+        } catch (err) {
+          console.error("Download failed", err); // eslint-disable-line no-console
+          setStatus("Unable to download audio feedback.");
+        }
+
+        return Date.now().toString();
       },
     },
   });

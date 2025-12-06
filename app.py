@@ -35,6 +35,9 @@ app.layout = html.Div(
     children=[
         dcc.Store(id="current-phrase-store", data=PHRASES[0]),
         dcc.Store(id="api-response-store"),
+        html.Div(id="speech-trigger", style={"display": "none"}),
+        html.Div(id="play-trigger", style={"display": "none"}),
+        html.Div(id="download-trigger", style={"display": "none"}),
         html.Header(
             className="hero",
             children=[
@@ -72,6 +75,8 @@ app.layout = html.Div(
                         html.Div(id="transcription-output", className="result-line"),
                         html.Div(id="score-output", className="result-line"),
                         html.Div(id="feedback-output", className="result-line"),
+                        html.Button("Play feedback audio", id="play-feedback-btn", className="ghost"),
+                        html.Button("Download feedback audio", id="download-feedback-btn", className="ghost"),
                     ],
                 ),
             ],
@@ -88,6 +93,26 @@ app.clientside_callback(
     Output("api-response-store", "data"),
     Input("record-button", "n_clicks"),
     State("current-phrase-store", "data"),
+)
+
+app.clientside_callback(
+    ClientsideFunction(namespace="audio", function_name="speakFeedback"),
+    Output("speech-trigger", "children"),
+    Input("api-response-store", "data"),
+)
+
+app.clientside_callback(
+    ClientsideFunction(namespace="audio", function_name="playFeedback"),
+    Output("play-trigger", "children"),
+    Input("play-feedback-btn", "n_clicks"),
+    State("api-response-store", "data"),
+)
+
+app.clientside_callback(
+    ClientsideFunction(namespace="audio", function_name="downloadFeedback"),
+    Output("download-trigger", "children"),
+    Input("download-feedback-btn", "n_clicks"),
+    State("api-response-store", "data"),
 )
 
 
@@ -123,16 +148,41 @@ def update_output(data):
     if "error" in data:
         return "", "", "", f"Error: {data['error']}"
 
-    transcription = data.get("transcription")
-    score = data.get("score")
-    feedback = data.get("feedback")
+    transcription = data.get("transcription") or ""
+    feedback = data.get("feedback") or ""
+    translation_score = data.get("translation_score") or data.get("score") or 0
+    pronunciation_score = data.get("pronunciation_score") or data.get("score") or 0
 
-    return (
-        f"Transcription: {transcription}",
-        f"Score: {score}/100",
-        f"Feedback: {feedback}",
-        "Analysis complete.",
+    def score_pill(label, icon, score_val):
+        pct = max(0, min(int(score_val), 100))
+        return html.Div(
+            className="score-pill",
+            children=[
+                html.Div(f"{icon} {label}", className="pill-label"),
+                html.Div(
+                    className="pill-bar",
+                    children=[
+                        html.Div(
+                            className="pill-fill",
+                            style={"width": f"{pct}%"},
+                        ),
+                        html.Div(f"{pct}%", className="pill-text"),
+                    ],
+                ),
+            ],
+        )
+
+    score_block = html.Div(
+        className="score-stack",
+        children=[
+            score_pill("דיוק תרגום", "💬", translation_score),
+            score_pill("הגייה", "🎙", pronunciation_score),
+        ],
     )
+
+    # We rely on client-side TTS for audio; still show text for clarity.
+    return f"תמלול: {transcription}", score_block, f"משוב: {feedback}", "Playing Hebrew audio feedback..."
+
 
 
 if __name__ == "__main__":

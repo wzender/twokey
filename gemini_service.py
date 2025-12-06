@@ -54,6 +54,8 @@ SYSTEM_PROMPT = (
     "ي→'י' (חצי תנועה i/y). "
     "החזר JSON קפדני עם המפתחות transcription, score (0-100), feedback (בעברית). "
     "אם ניתנת arabic_transliteration השתמש בה כמשפט היעד המדויק להשוואת תרגום/הגייה. "
+    "החזר גם translation_score (0-100) להערכת דיוק התרגום, ו-pronunciation_score (0-100) להערכת הגייה. "
+    "score יכול להיות הממוצע בין שניהם. "
     "הציון משקף איכות הגייה ודיוק תרגום; המשוב ישים: אילו אותיות/הברות היו שגויות ואיזו אות עברית להשתמש כדי לתקן."
 )
 
@@ -121,19 +123,38 @@ def _evaluate(
     transcription_out = data.get("transcription", transcription).strip()
     feedback = data.get("feedback", "").strip()
     score = data.get("score")
+    translation_score = data.get("translation_score", data.get("translationScore"))
+    pronunciation_score = data.get("pronunciation_score", data.get("pronunciationScore"))
 
-    if feedback == "" or score is None:
+    if feedback == "":
         raise ValueError("Evaluation response missing required fields.")
 
-    try:
-        score_int = int(score)
-    except (TypeError, ValueError) as exc:  # noqa: PERF203
-        raise ValueError("Score must be an integer.") from exc
+    def _to_int(val: Any) -> int | None:
+        try:
+            return int(val)
+        except (TypeError, ValueError):
+            return None
+
+    score_int = _to_int(score)
+    translation_int = _to_int(translation_score)
+    pronunciation_int = _to_int(pronunciation_score)
+
+    # Derive missing scores sensibly.
+    if score_int is None and translation_int is not None and pronunciation_int is not None:
+        score_int = round((translation_int + pronunciation_int) / 2)
+    if translation_int is None:
+        translation_int = score_int
+    if pronunciation_int is None:
+        pronunciation_int = score_int
+    if score_int is None:
+        raise ValueError("Score must be an integer.")
 
     return {
         "transcription": transcription_out,
         "feedback": feedback,
         "score": max(0, min(score_int, 100)),
+        "translation_score": max(0, min(translation_int or 0, 100)),
+        "pronunciation_score": max(0, min(pronunciation_int or 0, 100)),
     }
 
 

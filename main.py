@@ -7,9 +7,11 @@ from typing import Any, Dict
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.wsgi import WSGIMiddleware
+from fastapi.responses import Response
 
 from app import app
 from gemini_service import analyze_audio
+from openai import OpenAI
 
 server = FastAPI(title="Levantine Pronunciation Coach API")
 
@@ -56,6 +58,38 @@ async def analyze(
         raise HTTPException(status_code=500, detail="Failed to analyze audio.") from exc
 
     return result
+
+
+def _tts_client() -> OpenAI:
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY is not set.")
+    return OpenAI(api_key=api_key)
+
+
+@server.post("/api/tts")
+async def tts(text: Dict[str, str]) -> Response:
+    """
+    Convert Hebrew feedback text to speech using OpenAI TTS and return audio bytes.
+    """
+    content = text.get("text") if isinstance(text, dict) else None
+    if not content or not isinstance(content, str):
+        raise HTTPException(status_code=400, detail="Missing text for TTS.")
+
+    try:
+        client = _tts_client()
+        speech = client.audio.speech.create(
+            model=os.environ.get("OPENAI_MODEL_TTS", "gpt-4o-mini-tts"),
+            voice=os.environ.get("OPENAI_TTS_VOICE", "alloy"),
+            input=content,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logging.exception("TTS generation failed")
+        raise HTTPException(status_code=500, detail="Failed to generate audio.") from exc
+
+    audio_bytes = speech.read()
+    headers = {"Content-Disposition": 'attachment; filename="feedback.mp3"'}
+    return Response(content=audio_bytes, media_type="audio/mpeg", headers=headers)
 
 
 # Mount Dash under the root path after API routes are registered.
