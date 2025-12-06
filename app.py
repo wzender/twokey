@@ -27,7 +27,7 @@ app = dash.Dash(
     meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
     update_title=None,
 )
-app.title = "Levantine Arabic Pronunciation Coach"
+app.title = "מאמן הגייה ותרגול ערבית לבנטינית"
 server = app.server
 
 app.layout = html.Div(
@@ -41,8 +41,8 @@ app.layout = html.Div(
         html.Header(
             className="hero",
             children=[
-                html.H1("Levantine Pronunciation Coach"),
-                html.P("Record, analyze, and improve your Levantine Arabic pronunciation."),
+                html.H1("מאמן הגייה ותרגול ערבית לבנטינית"),
+                html.P("תרגל, הקלט, קבל משוב והשתפר בהגייה ובתרגום."),
             ],
         ),
         html.Main(
@@ -51,39 +51,39 @@ app.layout = html.Div(
                 html.Div(
                     className="card",
                     children=[
-                        html.H2("Translate & Record"),
+                        html.H2("תרגם והקלט"),
                         html.Div(
                             id="phrase-text",
                             className="phrase",
-                            children=f"Phrase: {PHRASES[0]['native']}",
+                            children=f"משפט: {PHRASES[0]['native']}",
                         ),
                         html.Div(
                             id="phrase-hint",
                             className="hint",
                             children=PHRASES[0]["hint"],
                         ),
-                        html.Button("Next phrase", id="next-phrase-btn", className="ghost"),
-                        html.P("Press and hold record, speak the translation, then release to analyze."),
-                        html.Button("Hold to Record", id="record-button", className="primary"),
+                        html.Button("משפט הבא", id="next-phrase-btn", className="ghost"),
+                        html.P("לחיצה ארוכה להקלטה, ואז שחרור לניתוח."),
+                        html.Button("לחצו והחזיקו להקלטה", id="record-button", className="primary"),
                         html.Div(id="output-status", className="status"),
                     ],
                 ),
                 html.Div(
                     className="card results",
                     children=[
-                        html.H2("Results"),
+                        html.H2("תוצאות"),
                         html.Div(id="transcription-output", className="result-line"),
                         html.Div(id="score-output", className="result-line"),
                         html.Div(id="feedback-output", className="result-line"),
-                        html.Button("Play feedback audio", id="play-feedback-btn", className="ghost"),
-                        html.Button("Download feedback audio", id="download-feedback-btn", className="ghost"),
+                        html.Button("נגן משוב קולי", id="play-feedback-btn", className="ghost"),
+                        html.Button("הורד משוב קולי", id="download-feedback-btn", className="ghost"),
                     ],
                 ),
             ],
         ),
         html.Footer(
             className="footer",
-            children="Built for Levantine learners. Keep practicing!",
+            children="נבנה ללומדי ערבית לבנטינית. המשיכו להתאמן!",
         ),
     ],
 )
@@ -129,7 +129,7 @@ def set_phrase(n_clicks):
     phrase = PHRASES[idx]
     native = phrase["native"]
     hint = phrase["hint"]
-    return phrase, f"Phrase: {native}", hint
+    return phrase, f"משפט: {native}", hint
 
 
 @app.callback(
@@ -143,10 +143,10 @@ def set_phrase(n_clicks):
 )
 def update_output(data):
     if data is None:
-        return "", "", "", "Press and hold 'Hold to Record' to start."
+        return "", "", "", "לחצו והחזיקו להקלטה כדי להתחיל."
 
     if "error" in data:
-        return "", "", "", f"Error: {data['error']}"
+        return "", "", "", f"שגיאה: {data['error']}"
 
     transcription = data.get("transcription") or ""
     feedback = data.get("feedback") or ""
@@ -181,7 +181,7 @@ def update_output(data):
     )
 
     # We rely on client-side TTS for audio; still show text for clarity.
-    return f"תמלול: {transcription}", score_block, f"משוב: {feedback}", "Playing Hebrew audio feedback..."
+    return f"תמלול: {transcription}", score_block, f"משוב: {feedback}", "מנגן משוב קולי בעברית..."
 
 
 

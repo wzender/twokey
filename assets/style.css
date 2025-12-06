@@ -22,6 +22,8 @@ body {
     radial-gradient(circle at 80% 0%, rgba(14, 165, 233, 0.08), transparent 20%),
     var(--bg);
   color: var(--text);
+  direction: rtl;
+  text-align: right;
 }
 
 .page {
@@ -35,7 +37,7 @@ body {
 }
 
 .hero {
-  text-align: center;
+  text-align: right;
   padding: 1rem;
 }
 

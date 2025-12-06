@@ -68,7 +68,7 @@
     if (state.recorder) return;
 
     try {
-      setStatus("Recording... release to analyze.");
+      setStatus("מקליט... שחררו לניתוח.");
       state.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(state.stream);
       const chunks = [];
@@ -114,7 +114,7 @@
           });
 
           if (!response.ok) {
-            const message = (await response.text()) || "Analysis failed.";
+            const message = (await response.text()) || "הניתוח נכשל.";
             state.resolve?.({ error: message });
           } else {
             const data = await response.json();
@@ -160,7 +160,7 @@
         cleanup();
         state.recordPromise = null;
         state.reject?.(err);
-        setStatus(err?.message || "Unable to start recording.");
+        setStatus(err?.message || "לא ניתן להתחיל הקלטה.");
       });
     });
 
@@ -197,7 +197,7 @@
         }
 
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          return { error: "Microphone access is unavailable in this browser." };
+          return { error: "אין גישה למיקרופון בדפדפן זה." };
         }
 
         if (state.recordPromise) {
@@ -209,7 +209,7 @@
           }
         }
 
-        return { error: "Press and hold the record button to start." };
+        return { error: "לחצו והחזיקו את כפתור ההקלטה כדי להתחיל." };
       },
       speakFeedback: function (data) {
         if (!data || !data.feedback || !window.speechSynthesis) {
@@ -218,7 +218,7 @@
 
         try {
           if (!state.userActivatedAudio) {
-            setStatus("Tap and hold record again to enable audio playback.");
+            setStatus("לחצו והחזיקו שוב כדי לאפשר ניגון קולי.");
             return window.dash_clientside.no_update;
           }
 
@@ -266,7 +266,7 @@
           });
 
           if (!response.ok) {
-            setStatus("Unable to download audio feedback.");
+            setStatus("לא ניתן להוריד את המשוב הקולי.");
             return window.dash_clientside.no_update;
           }
 
@@ -279,10 +279,10 @@
           a.click();
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
-          setStatus("Downloaded feedback audio.");
+          setStatus("המשוב הקולי ירד בהצלחה.");
         } catch (err) {
           console.error("Download failed", err); // eslint-disable-line no-console
-          setStatus("Unable to download audio feedback.");
+          setStatus("לא ניתן להוריד את המשוב הקולי.");
         }
 
         return Date.now().toString();

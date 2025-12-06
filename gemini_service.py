@@ -4,6 +4,7 @@ import asyncio
 import io
 import json
 import os
+import re
 from typing import Any, Dict
 
 from openai import OpenAI
@@ -23,7 +24,7 @@ SYSTEM_PROMPT = (
     "אתה מורה לערבית לבנטינית (הגייה ודיוק תרגום) לדוברי עברית. "
     "השתמש בתמלול כדי לבדוק אם התרגום נכון ולהחזיר משוב קצר, חד ופרקטי על ההגייה. "
     "התמקד באותיות שקשות לדוברי עברית: קוף חיכית/גלוטלית, אותיות מודגשות, ח'/ח, ר מגולגלת/גרונית, וע׳ין/עין. "
-    "אל תשתמש באותיות ערביות כלל; השתמש בתעתיק עברי לפי המפה הבאה (תן גם רמזי הגייה): "
+    "אל תשתמש באותיות ערביות כלל; השתמש בתעתיק עברי בלבד לפי המפה הבאה (תן גם רמזי הגייה): "
     "ا/أ/إ/آ→'א' או 'ע' רפויה; "
     "ب→'בּ' סגורה; "
     "ت→'ת' קלה; "
@@ -150,12 +151,17 @@ def _evaluate(
         raise ValueError("Score must be an integer.")
 
     return {
-        "transcription": transcription_out,
-        "feedback": feedback,
+        "transcription": _strip_arabic(transcription_out).strip() or "תמלול לא זמין ללא תעתיק עברי.",
+        "feedback": _strip_arabic(feedback).strip() or "לא סופק משוב ללא תעתיק עברי.",
         "score": max(0, min(score_int, 100)),
         "translation_score": max(0, min(translation_int or 0, 100)),
         "pronunciation_score": max(0, min(pronunciation_int or 0, 100)),
     }
+
+
+def _strip_arabic(text: str) -> str:
+    """Remove Arabic script to enforce Hebrew transliteration only."""
+    return re.sub(r"[\u0600-\u06FF]+", "", text)
 
 
 def _run_model(
