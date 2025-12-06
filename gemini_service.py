@@ -19,12 +19,42 @@ SYSTEM_PROMPT_ENG = (
     "Score reflects overall pronunciation quality and translation accuracy."
 )
 
-SYSTEM_PROMPT= (
-    "אתה מורה לערבית קפדני להיגוי ותרגום בערבית לבנטינית, לתלמידים דוברי עברית "
-    "השתמש בתמלול כדי לשפוט את דיוק התרגום ולספק משוב תמציתי וניתן לפעולה על ההגייה "
-    "במיוחד על הפונמות הלבנטיניות כמו קוף, אותיות נחציות, ח' וח, ר מתגלגת או ר גרונית ועין. "
-    "Return STRICT JSON with keys transcription, score (0-100), and feedback in hebrew. "
-    "Score reflects overall pronunciation quality and translation accuracy."
+SYSTEM_PROMPT = (
+    "אתה מורה לערבית לבנטינית (הגייה ודיוק תרגום) לדוברי עברית. "
+    "השתמש בתמלול כדי לבדוק אם התרגום נכון ולהחזיר משוב קצר, חד ופרקטי על ההגייה. "
+    "התמקד באותיות שקשות לדוברי עברית: קוף חיכית/גלוטלית, אותיות מודגשות, ח'/ח, ר מגולגלת/גרונית, וע׳ין/עין. "
+    "אל תשתמש באותיות ערביות כלל; השתמש בתעתיק עברי לפי המפה הבאה (תן גם רמזי הגייה): "
+    "ا/أ/إ/آ→'א' או 'ע' רפויה; "
+    "ب→'בּ' סגורה; "
+    "ت→'ת' קלה; "
+    "ث→'ת׳' (לעיתים נשמעת 'ס'); "
+    "ج→'ג׳' (כמו ג'מייל), אפשר 'ג' קלה בדיאלקט; "
+    "ح→'ח' עמוקה גרונית; "
+    "خ→'ח׳' / 'כּ' חיכית, עם חיכוך עמוק; "
+    "د→'ד'; "
+    "ذ→'ד׳/ז׳' (th רפה); "
+    "ر→'ר' מגולגלת או גרונית; "
+    "ز→'ז'; "
+    "س→'ס'; "
+    "ش→'שׁ'; "
+    "ص→'צ' מודגשת (חיכוך מודגש); "
+    "ض→'ד׳' עמוקה/מצלצלת; "
+    "ط→'ט' מודגשת; "
+    "ظ→'ט׳/ז׳' מודגשת; "
+    "ع→'ע' עמוקה, לוחצת; "
+    "غ→'ע׳/ר׳' חיכית/וילונית; "
+    "ف→'פ' שפתית; "
+    "ق→'ק' אחורית/גלוטלית; "
+    "ك→'כ' קדמית (לעיתים 'ק' רפה); "
+    "ل→'ל'; "
+    "م→'מ'; "
+    "ن→'נ'; "
+    "ه→'ה'; "
+    "و→'ו' (חצי תנועה u/w); "
+    "ي→'י' (חצי תנועה i/y). "
+    "החזר JSON קפדני עם המפתחות transcription, score (0-100), feedback (בעברית). "
+    "אם ניתנת arabic_transliteration השתמש בה כמשפט היעד המדויק להשוואת תרגום/הגייה. "
+    "הציון משקף איכות הגייה ודיוק תרגום; המשוב ישים: אילו אותיות/הברות היו שגויות ואיזו אות עברית להשתמש כדי לתקן."
 )
 
 
@@ -49,12 +79,20 @@ def _transcribe(client: OpenAI, audio_bytes: bytes) -> str:
     return text
 
 
-def _evaluate(client: OpenAI, transcription: str, phrase: str | None, hint: str | None) -> Dict[str, Any]:
+def _evaluate(
+    client: OpenAI,
+    transcription: str,
+    phrase: str | None,
+    hint: str | None,
+    arabic_transliteration: str | None,
+) -> Dict[str, Any]:
     context = []
     if phrase:
         context.append(f"Target meaning (native phrase): {phrase}")
     if hint:
         context.append(f"Prompt to user: {hint}")
+    if arabic_transliteration:
+        context.append(f"Target Arabic transliteration (reference pronunciation): {arabic_transliteration}")
     context_text = "\n".join(context) if context else "No target phrase provided."
 
     completion = client.chat.completions.create(
@@ -67,7 +105,7 @@ def _evaluate(client: OpenAI, transcription: str, phrase: str | None, hint: str 
                 "role": "user",
                 "content": (
                     f"{context_text}\n"
-                    f"Transcription: {transcription}\n"
+                    f"Learner transcription: {transcription}\n"
                     "Return JSON with transcription, score, feedback."
                 ),
             },
@@ -99,18 +137,32 @@ def _evaluate(client: OpenAI, transcription: str, phrase: str | None, hint: str 
     }
 
 
-def _run_model(audio_bytes: bytes, phrase: str | None, hint: str | None) -> Dict[str, Any]:
+def _run_model(
+    audio_bytes: bytes,
+    phrase: str | None,
+    hint: str | None,
+    arabic_transliteration: str | None,
+) -> Dict[str, Any]:
     client = _client()
     transcription = _transcribe(client, audio_bytes)
-    return _evaluate(client, transcription, phrase, hint)
+    return _evaluate(client, transcription, phrase, hint, arabic_transliteration)
 
 
 async def analyze_audio(
-    audio_bytes: bytes, phrase: str | None = None, hint: str | None = None
+    audio_bytes: bytes,
+    phrase: str | None = None,
+    hint: str | None = None,
+    arabic_transliteration: str | None = None,
 ) -> Dict[str, Any]:
     """
     Run pronunciation analysis using Whisper for transcription, then an LLM for scoring/feedback.
     Wrapped in a thread to avoid blocking the event loop.
     """
 
-    return await asyncio.to_thread(_run_model, audio_bytes, phrase, hint)
+    return await asyncio.to_thread(
+        _run_model,
+        audio_bytes,
+        phrase,
+        hint,
+        arabic_transliteration,
+    )

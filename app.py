@@ -3,17 +3,23 @@ from dash import ClientsideFunction, Input, Output, State, dcc, html
 
 PHRASES = [
     {
-        "native": "שלום, מה שלומך?",
-        "hint": "Say 'Hello, how are you?' in Levantine Arabic.",
+        "native": "שלום, שמי ח'אלד, אני אכלתי היום עגבניות",
+        "arabic_transliteration": "מַרְחַבַּא, אִסְמִי חַ'אלֵד, אַנַא אַכַּלֵת אֵלְיוֹם בַּנְדוֹרַה",
+        "hint": "",
     },
     {
-        "native": "איפה תחנת האוטובוס הקרובה?",
-        "hint": "Ask: Where is the nearest bus station?",
+        "native": "-ועליכם השלום, שמי דאוּד, הכבוד הוא לי יַא חַ'אלֵד",
+        "arabic_transliteration": "וּעַלֵיכֹּם אֵ(ל)סַّלַאם! אִסמִ-י דַאוּד, אֵ(ל)שַّרַף אִלִי יַא חַ'אלֵד!",
+        "hint": "",
     },
-    {
-        "native": "תודה רבה, יום טוב.",
-        "hint": "Say: Thank you very much, have a good day.",
-    },
+    # {
+    #     "native": "שם משפחתי יוּסף, אני גר בשכונה גדולה",
+    #     "hint": "",
+    # },
+    # {
+    #     "native": "אני ישבתי על כיסא גדול",
+    #     "hint": "",
+    # },
 ]
 
 app = dash.Dash(

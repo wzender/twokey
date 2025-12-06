@@ -28,6 +28,7 @@ async def analyze(
     file: UploadFile = File(...),
     phrase: str | None = Form(None),
     hint: str | None = Form(None),
+    arabic_transliteration: str | None = Form(None),
 ) -> Dict[str, Any]:
     """
     Receive an uploaded WAV file from the frontend, run Gemini analysis,
@@ -41,7 +42,12 @@ async def analyze(
         raise HTTPException(status_code=400, detail="Empty audio file received.")
 
     try:
-        result = await analyze_audio(audio_bytes, phrase=phrase, hint=hint)
+        result = await analyze_audio(
+            audio_bytes,
+            phrase=phrase,
+            hint=hint,
+            arabic_transliteration=arabic_transliteration,
+        )
     except ValueError as exc:
         # Likely configuration issues such as missing API key.
         raise HTTPException(status_code=500, detail=str(exc)) from exc

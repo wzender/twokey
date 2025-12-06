@@ -67,6 +67,12 @@
           if (state.phraseData && state.phraseData.hint) {
             formData.append("hint", state.phraseData.hint);
           }
+          if (state.phraseData && state.phraseData.arabic_transliteration) {
+            formData.append(
+              "arabic_transliteration",
+              state.phraseData.arabic_transliteration
+            );
+          }
 
           const response = await fetch("/api/analyze", {
             method: "POST",
