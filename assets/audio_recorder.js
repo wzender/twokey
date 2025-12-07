@@ -116,9 +116,16 @@
           if (!response.ok) {
             const message = (await response.text()) || "הניתוח נכשל.";
             state.resolve?.({ error: message });
+            setStatus("הניתוח נכשל.");
           } else {
             const data = await response.json();
             state.resolve?.(data);
+            setStatus("הניתוח הושלם.");
+            try {
+              console.log("analysis result", data); // eslint-disable-line no-console
+            } catch (e) {
+              /* ignore */
+            }
           }
         } catch (err) {
           setStatus("הניתוח נכשל, נסו שוב או בדקו חיבור.");
