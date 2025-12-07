@@ -51,6 +51,8 @@ async def analyze(
     audio_bytes = await file.read()
     if not audio_bytes:
         raise HTTPException(status_code=400, detail="Empty audio file received.")
+    logger.info("/api/analyze audio_size_bytes=%d", len(audio_bytes))
+    print(f"[analyze] audio bytes={len(audio_bytes)}")
 
     try:
         result = await analyze_audio(

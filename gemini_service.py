@@ -89,6 +89,7 @@ def _transcribe(client: OpenAI, audio_bytes: bytes) -> str:
         prompt=TRANSCRIBE_PROMPT,
     )
     text = transcript.strip()
+    print(f"[transcribe] bytes={len(audio_bytes)} text='{text[:80]}'")
     if not text:
         raise ValueError("Transcription is empty.")
     return text
