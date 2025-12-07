@@ -13,6 +13,9 @@ from app import app
 from gemini_service import analyze_audio
 from openai import OpenAI
 
+logger = logging.getLogger("twokey.api")
+logging.basicConfig(level=logging.INFO)
+
 server = FastAPI(title="Levantine Pronunciation Coach API")
 
 # Allow local development from different origins (e.g., Dash hot reload).
@@ -36,6 +39,8 @@ async def analyze(
     Receive an uploaded WAV file from the frontend, run Gemini analysis,
     and return structured feedback. Accepts the native phrase as context.
     """
+    logger.info("/api/analyze called", extra={"filename": file.filename, "content_type": file.content_type})
+    print(f"[analyze] received file={file.filename} content_type={file.content_type}")
     if file.content_type not in {"audio/wav", "audio/x-wav", "audio/wave"}:
         raise HTTPException(status_code=400, detail="File must be a WAV audio.")
 
@@ -50,11 +55,16 @@ async def analyze(
             hint=hint,
             arabic_transliteration=arabic_transliteration,
         )
+        logger.info("/api/analyze succeeded")
+        print("[analyze] success")
     except ValueError as exc:
         # Likely configuration issues such as missing API key.
+        logger.error("ValueError during analysis: %s", exc, exc_info=True)
+        print(f"[analyze] ValueError: {exc}")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     except Exception as exc:  # noqa: BLE001
-        logging.exception("Gemini analysis failed")
+        logger.exception("Gemini analysis failed")
+        print(f"[analyze] unexpected error: {exc}")
         raise HTTPException(status_code=500, detail="Failed to analyze audio.") from exc
 
     return result
@@ -83,8 +93,11 @@ async def tts(text: Dict[str, str]) -> Response:
             voice=os.environ.get("OPENAI_TTS_VOICE", "alloy"),
             input=content,
         )
+        logger.info("/api/tts succeeded")
+        print("[tts] success")
     except Exception as exc:  # noqa: BLE001
-        logging.exception("TTS generation failed")
+        logger.exception("TTS generation failed")
+        print(f"[tts] error: {exc}")
         raise HTTPException(status_code=500, detail="Failed to generate audio.") from exc
 
     audio_bytes = speech.read()
