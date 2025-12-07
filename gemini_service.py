@@ -5,6 +5,7 @@ import io
 import json
 import os
 import re
+import difflib
 from typing import Any, Dict
 
 from openai import OpenAI
@@ -153,6 +154,27 @@ def _evaluate(
     score_int = _to_int(score)
     translation_int = _to_int(translation_score)
     pronunciation_int = _to_int(pronunciation_score)
+
+    # Fallback: if scores missing or zero but strings are similar, derive similarity score.
+    def _similarity_pct(a: str, b: str) -> int:
+        a_norm = _strip_arabic(a).strip().lower()
+        b_norm = _strip_arabic(b).strip().lower()
+        if not a_norm or not b_norm:
+            return 0
+        ratio = difflib.SequenceMatcher(None, a_norm, b_norm).ratio()
+        return int(round(ratio * 100))
+
+    if translation_int in (None, 0) and arabic_transliteration:
+        similarity = _similarity_pct(transcription_out, arabic_transliteration)
+        if similarity:
+            translation_int = similarity
+            print(f"[eval] derived translation_score via similarity={similarity}")
+
+    if pronunciation_int in (None, 0) and arabic_transliteration:
+        similarity = _similarity_pct(transcription_out, arabic_transliteration)
+        if similarity:
+            pronunciation_int = similarity
+            print(f"[eval] derived pronunciation_score via similarity={similarity}")
 
     # Derive missing scores sensibly.
     if score_int is None and translation_int is not None and pronunciation_int is not None:
