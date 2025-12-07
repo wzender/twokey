@@ -121,6 +121,7 @@
             state.resolve?.(data);
           }
         } catch (err) {
+          setStatus("הניתוח נכשל, נסו שוב או בדקו חיבור.");
           state.reject?.(err);
         } finally {
           cleanup();
@@ -204,6 +205,9 @@
           try {
             const result = await state.recordPromise;
             return result;
+          } catch (err) {
+            // Surface errors to Dash instead of hanging the UI (seen on mobile Safari).
+            return { error: err?.message || "הניתוח נכשל במכשיר זה." };
           } finally {
             state.recordPromise = null;
           }

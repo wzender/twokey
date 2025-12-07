@@ -11,6 +11,11 @@ from openai import OpenAI
 
 TRANSCRIBE_MODEL = os.environ.get("OPENAI_MODEL_TRANSCRIBE", "whisper-1")
 EVAL_MODEL = os.environ.get("OPENAI_MODEL_EVAL", "gpt-4o-mini")
+TRANSCRIBE_LANGUAGE = os.environ.get("OPENAI_TRANSCRIBE_LANGUAGE", "ar")
+TRANSCRIBE_PROMPT = os.environ.get(
+    "OPENAI_TRANSCRIBE_PROMPT",
+    "Audio is spoken in Levantine Arabic (Mashriqi dialect).",
+)
 
 SYSTEM_PROMPT_ENG = (
     "You are a strict Levantine Arabic pronunciation and translation coach. "
@@ -80,6 +85,8 @@ def _transcribe(client: OpenAI, audio_bytes: bytes) -> str:
         model=TRANSCRIBE_MODEL,
         file=audio_file,
         response_format="text",
+        language=TRANSCRIBE_LANGUAGE,
+        prompt=TRANSCRIBE_PROMPT,
     )
     text = transcript.strip()
     if not text:
