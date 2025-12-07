@@ -128,6 +128,7 @@ def _evaluate(
         ],
     )
     text = completion.choices[0].message.content or ""
+    print(f"[eval] raw completion: {text}")
 
     try:
         data = json.loads(text)
