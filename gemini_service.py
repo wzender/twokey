@@ -79,9 +79,9 @@ def _client() -> OpenAI:
     return OpenAI(api_key=api_key)
 
 
-def _transcribe(client: OpenAI, audio_bytes: bytes) -> str:
+def _transcribe(client: OpenAI, audio_bytes: bytes, file_name: str | None = None) -> str:
     audio_file = io.BytesIO(audio_bytes)
-    audio_file.name = "recording.wav"
+    audio_file.name = file_name or "recording.wav"
     transcript = client.audio.transcriptions.create(
         model=TRANSCRIBE_MODEL,
         file=audio_file,
@@ -205,9 +205,10 @@ def _run_model(
     phrase: str | None,
     hint: str | None,
     arabic_transliteration: str | None,
+    file_name: str | None,
 ) -> Dict[str, Any]:
     client = _client()
-    transcription = _transcribe(client, audio_bytes)
+    transcription = _transcribe(client, audio_bytes, file_name=file_name)
     return _evaluate(client, transcription, phrase, hint, arabic_transliteration)
 
 
@@ -216,6 +217,7 @@ async def analyze_audio(
     phrase: str | None = None,
     hint: str | None = None,
     arabic_transliteration: str | None = None,
+    file_name: str | None = None,
 ) -> Dict[str, Any]:
     """
     Run pronunciation analysis using Whisper for transcription, then an LLM for scoring/feedback.
@@ -228,4 +230,5 @@ async def analyze_audio(
         phrase,
         hint,
         arabic_transliteration,
+        file_name,
     )
