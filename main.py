@@ -39,7 +39,11 @@ async def analyze(
     Receive an uploaded WAV file from the frontend, run Gemini analysis,
     and return structured feedback. Accepts the native phrase as context.
     """
-    logger.info("/api/analyze called", extra={"filename": file.filename, "content_type": file.content_type})
+    logger.info(
+        "/api/analyze called filename=%s content_type=%s",
+        file.filename,
+        file.content_type,
+    )
     print(f"[analyze] received file={file.filename} content_type={file.content_type}")
     if file.content_type not in {"audio/wav", "audio/x-wav", "audio/wave"}:
         raise HTTPException(status_code=400, detail="File must be a WAV audio.")
