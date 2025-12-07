@@ -61,8 +61,16 @@ async def analyze(
             hint=hint,
             arabic_transliteration=arabic_transliteration,
         )
-        logger.info("/api/analyze succeeded")
-        print("[analyze] success")
+        logger.info(
+            "/api/analyze succeeded transcription_len=%s score=%s translation_score=%s pronunciation_score=%s",
+            len(result.get("transcription", "") or ""),
+            result.get("score"),
+            result.get("translation_score"),
+            result.get("pronunciation_score"),
+        )
+        print(
+            f"[analyze] success scores t={result.get('translation_score')} p={result.get('pronunciation_score')} avg={result.get('score')}"
+        )
     except ValueError as exc:
         # Likely configuration issues such as missing API key.
         logger.error("ValueError during analysis: %s", exc, exc_info=True)
