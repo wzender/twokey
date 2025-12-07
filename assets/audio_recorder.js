@@ -223,76 +223,19 @@
         return { error: "לחצו והחזיקו את כפתור ההקלטה כדי להתחיל." };
       },
       speakFeedback: function (data) {
-        if (!data || !data.feedback || !window.speechSynthesis) {
-          return window.dash_clientside.no_update;
-        }
-
-        try {
-          // Do not autoplay to satisfy browser policies; wait for user click on play.
-          state.pendingSpeech = data.feedback;
-          setStatus("מוכן לניגון. לחצו על \"נגן משוב קולי\".");
-          if (!state.userActivatedAudio) {
-            return window.dash_clientside.no_update;
-          }
-          // If user already interacted, we can preload voices for faster play.
-          window.speechSynthesis.getVoices();
-        } catch (err) {
-          console.error("Speech synthesis failed", err); // eslint-disable-line no-console
-        }
-
-        return Date.now().toString();
+        // Audio feedback disabled for debugging; keep UI responsive.
+        setStatus("הושלם (ללא השמעה).");
+        return window.dash_clientside.no_update;
       },
       playFeedback: function (nClicks, data) {
-        if (!nClicks || !data || !data.feedback || !window.speechSynthesis) {
-          return window.dash_clientside.no_update;
-        }
-        try {
-          state.userActivatedAudio = true;
-          if (state.voicesReady || window.speechSynthesis.getVoices().length > 0) {
-            state.voicesReady = true;
-            speakHebrew(data.feedback);
-          } else {
-            state.pendingSpeech = data.feedback;
-            window.speechSynthesis.getVoices();
-          }
-        } catch (err) {
-          console.error("Speech synthesis failed", err); // eslint-disable-line no-console
-        }
-        return Date.now().toString();
+        // Disabled playback during debugging.
+        setStatus("השמעה מנוטרלת לזמן הדיבוג.");
+        return window.dash_clientside.no_update;
       },
       downloadFeedback: async function (nClicks, data) {
-        if (!nClicks || !data || !data.feedback) {
-          return window.dash_clientside.no_update;
-        }
-
-        try {
-          const response = await fetch("/api/tts", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: data.feedback }),
-          });
-
-          if (!response.ok) {
-            setStatus("לא ניתן להוריד את המשוב הקולי.");
-            return window.dash_clientside.no_update;
-          }
-
-          const blob = await response.blob();
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "feedback-hebrew.mp3";
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          setStatus("המשוב הקולי ירד בהצלחה.");
-        } catch (err) {
-          console.error("Download failed", err); // eslint-disable-line no-console
-          setStatus("לא ניתן להוריד את המשוב הקולי.");
-        }
-
-        return Date.now().toString();
+        // Disabled TTS download during debugging.
+        setStatus("הורדת אודיו מנוטרלת לזמן הדיבוג.");
+        return window.dash_clientside.no_update;
       },
     },
   });
