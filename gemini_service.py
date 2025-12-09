@@ -5,18 +5,12 @@ import io
 import json
 import os
 import re
-import difflib
 from typing import Any, Dict
 
 from openai import OpenAI
 
 TRANSCRIBE_MODEL = os.environ.get("OPENAI_MODEL_TRANSCRIBE", "whisper-1")
 EVAL_MODEL = os.environ.get("OPENAI_MODEL_EVAL", "gpt-4o-mini")
-TRANSCRIBE_LANGUAGE = os.environ.get("OPENAI_TRANSCRIBE_LANGUAGE", "ar")
-TRANSCRIBE_PROMPT = os.environ.get(
-    "OPENAI_TRANSCRIBE_PROMPT",
-    "Audio is spoken in Levantine Arabic (Mashriqi dialect).",
-)
 
 SYSTEM_PROMPT_ENG = (
     "You are a strict Levantine Arabic pronunciation and translation coach. "
@@ -79,18 +73,15 @@ def _client() -> OpenAI:
     return OpenAI(api_key=api_key)
 
 
-def _transcribe(client: OpenAI, audio_bytes: bytes, file_name: str | None = None) -> str:
+def _transcribe(client: OpenAI, audio_bytes: bytes) -> str:
     audio_file = io.BytesIO(audio_bytes)
-    audio_file.name = file_name or "recording.wav"
+    audio_file.name = "recording.wav"
     transcript = client.audio.transcriptions.create(
         model=TRANSCRIBE_MODEL,
         file=audio_file,
         response_format="text",
-        language=TRANSCRIBE_LANGUAGE,
-        prompt=TRANSCRIBE_PROMPT,
     )
     text = transcript.strip()
-    print(f"[transcribe] bytes={len(audio_bytes)} text='{text[:80]}'")
     if not text:
         raise ValueError("Transcription is empty.")
     return text
@@ -129,7 +120,6 @@ def _evaluate(
         ],
     )
     text = completion.choices[0].message.content or ""
-    print(f"[eval] raw completion: {text}")
 
     try:
         data = json.loads(text)
@@ -154,27 +144,6 @@ def _evaluate(
     score_int = _to_int(score)
     translation_int = _to_int(translation_score)
     pronunciation_int = _to_int(pronunciation_score)
-
-    # Fallback: if scores missing or zero but strings are similar, derive similarity score.
-    def _similarity_pct(a: str, b: str) -> int:
-        a_norm = _strip_arabic(a).strip().lower()
-        b_norm = _strip_arabic(b).strip().lower()
-        if not a_norm or not b_norm:
-            return 0
-        ratio = difflib.SequenceMatcher(None, a_norm, b_norm).ratio()
-        return int(round(ratio * 100))
-
-    if translation_int in (None, 0) and arabic_transliteration:
-        similarity = _similarity_pct(transcription_out, arabic_transliteration)
-        if similarity:
-            translation_int = similarity
-            print(f"[eval] derived translation_score via similarity={similarity}")
-
-    if pronunciation_int in (None, 0) and arabic_transliteration:
-        similarity = _similarity_pct(transcription_out, arabic_transliteration)
-        if similarity:
-            pronunciation_int = similarity
-            print(f"[eval] derived pronunciation_score via similarity={similarity}")
 
     # Derive missing scores sensibly.
     if score_int is None and translation_int is not None and pronunciation_int is not None:
@@ -205,10 +174,9 @@ def _run_model(
     phrase: str | None,
     hint: str | None,
     arabic_transliteration: str | None,
-    file_name: str | None,
 ) -> Dict[str, Any]:
     client = _client()
-    transcription = _transcribe(client, audio_bytes, file_name=file_name)
+    transcription = _transcribe(client, audio_bytes)
     return _evaluate(client, transcription, phrase, hint, arabic_transliteration)
 
 
@@ -217,7 +185,6 @@ async def analyze_audio(
     phrase: str | None = None,
     hint: str | None = None,
     arabic_transliteration: str | None = None,
-    file_name: str | None = None,
 ) -> Dict[str, Any]:
     """
     Run pronunciation analysis using Whisper for transcription, then an LLM for scoring/feedback.
@@ -230,5 +197,4 @@ async def analyze_audio(
         phrase,
         hint,
         arabic_transliteration,
-        file_name,
     )
