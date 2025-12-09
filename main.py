@@ -103,31 +103,22 @@ def _twilio_client() -> Client:
 
 
 async def _download_twilio_media(url: str) -> bytes:
-    """
-    Fetch media from a Twilio-provided URL using the Twilio REST client (per Twilio WhatsApp media tutorial).
-    """
     client = _twilio_client()
 
+    # Parse the URL to extract path and host
+    parsed = urlparse(url)
+    path = parsed.path + ("?" + parsed.query if parsed.query else "")
+
     try:
-        # Twilio helper handles auth and redirects to the media location.
-        response = await asyncio.to_thread(client.request, "GET", url)
-    except Exception as exc:  # noqa: BLE001
-        logging.exception("Twilio client request failed")
-        raise HTTPException(status_code=502, detail="Failed to fetch media from Twilio.") from exc
-
-    if response.status_code >= 400:
-        logging.error(
-            "Twilio media fetch failed: status=%s body=%s url=%s",
-            response.status_code,
-            response.text,
-            url,
+        response = await asyncio.to_thread(
+            client.request,
+            "GET",
+            path,
+            base="https://api.twilio.com",
+            auth=(client.username, client.password),  # username = SID, password = token
         )
-        raise HTTPException(
-            status_code=502,
-            detail=f"Failed to fetch media from Twilio: {response.status_code}",
-        )
-
-    return response.content
+    except Exception as exc:
+        ...
 
 
 def _twiml_message(body: str, media_url: str | None = None) -> Response:
