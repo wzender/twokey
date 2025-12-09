@@ -3,14 +3,16 @@ from __future__ import annotations
 import logging
 import os
 from typing import Any, Dict
+from xml.sax.saxutils import escape
 
+import httpx
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.wsgi import WSGIMiddleware
 from fastapi.responses import Response
 
 from app import app
-from gemini_service import analyze_audio
+from llm_service import analyze_audio
 from openai import OpenAI
 
 server = FastAPI(title="Levantine Pronunciation Coach API")
@@ -67,6 +69,42 @@ def _tts_client() -> OpenAI:
     return OpenAI(api_key=api_key)
 
 
+def _twilio_auth() -> tuple[str, str]:
+    sid = os.environ.get("TWILIO_ACCOUNT_SID")
+    token = os.environ.get("TWILIO_AUTH_TOKEN")
+    if not sid or not token:
+        raise HTTPException(
+            status_code=500,
+            detail="TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN is missing.",
+        )
+    return sid, token
+
+
+async def _download_twilio_media(url: str) -> bytes:
+    """
+    Fetch media from a Twilio-provided URL (requires basic auth).
+    """
+    sid, token = _twilio_auth()
+    async with httpx.AsyncClient(timeout=15) as client:
+        resp = await client.get(url, auth=(sid, token))
+        try:
+            resp.raise_for_status()
+        except httpx.HTTPStatusError as exc:  # noqa: B904
+            raise HTTPException(
+                status_code=502,
+                detail=f"Failed to fetch media from Twilio: {exc.response.status_code}",
+            ) from exc
+        return resp.content
+
+
+def _twiml_message(body: str) -> Response:
+    """
+    Return a minimal TwiML Message response.
+    """
+    xml = f"<Response><Message>{escape(body)}</Message></Response>"
+    return Response(content=xml, media_type="application/xml")
+
+
 @server.post("/api/tts")
 async def tts(text: Dict[str, str]) -> Response:
     """
@@ -90,6 +128,51 @@ async def tts(text: Dict[str, str]) -> Response:
     audio_bytes = speech.read()
     headers = {"Content-Disposition": 'attachment; filename="feedback.mp3"'}
     return Response(content=audio_bytes, media_type="audio/mpeg", headers=headers)
+
+
+@server.post("/api/whatsapp")
+async def whatsapp_voice_webhook(
+    num_media: int = Form(0, alias="NumMedia"),
+    media_url: str | None = Form(None, alias="MediaUrl0"),
+    media_content_type: str | None = Form(None, alias="MediaContentType0"),
+    body: str | None = Form(None, alias="Body"),
+    sender: str | None = Form(None, alias="From"),
+) -> Response:
+    """
+    Twilio webhook to accept WhatsApp voice notes and return feedback via TwiML.
+    """
+    if num_media < 1 or not media_url:
+        return _twiml_message("שלחו הודעת קול בוואטסאפ כדי לקבל משוב הגייה.")
+
+    if media_content_type and not media_content_type.startswith("audio/"):
+        return _twiml_message("ההודעה שקיבלתי אינה אודיו. שלחו הודעת קול חדשה.")
+
+    try:
+        audio_bytes = await _download_twilio_media(media_url)
+        result = await analyze_audio(
+            audio_bytes,
+            phrase=body,
+            hint=None,
+            arabic_transliteration=None,
+        )
+    except HTTPException as exc:
+        # Pass along explicit HTTP errors (e.g., missing creds).
+        raise exc
+    except Exception as exc:  # noqa: BLE001
+        logging.exception("WhatsApp analysis failed")
+        return _twiml_message("לא הצלחתי לנתח את ההודעה. נסו שוב מאוחר יותר.")
+
+    transcription = result.get("transcription", "")
+    score = result.get("score", 0)
+    feedback = result.get("feedback", "")
+
+    sender_text = f"{sender} " if sender else ""
+    reply = (
+        f"{sender_text}תמלול: {transcription}\n"
+        f"ציון כללי: {score}/100\n"
+        f"משוב: {feedback}"
+    )
+    return _twiml_message(reply)
 
 
 # Mount Dash under the root path after API routes are registered.

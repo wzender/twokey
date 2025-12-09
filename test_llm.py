@@ -1,6 +1,6 @@
 """
 Lightweight sanity check for a configured OPENAI_API_KEY.
-Run with: python test_gemini.py
+Run with: python test_llm.py
 """
 
 import os
