@@ -4,3 +4,4 @@ openai
 httpx
 python-multipart
 uvicorn[standard]
+twilio

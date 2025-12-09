@@ -3,10 +3,10 @@ from __future__ import annotations
 import logging
 import os
 from typing import Any, Dict
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, urlparse
 from xml.sax.saxutils import escape
 
-import httpx
+from twilio.rest import Client
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.wsgi import WSGIMiddleware
@@ -96,40 +96,40 @@ def _twilio_auth() -> tuple[str, str]:
     return sid, token
 
 
+def _twilio_client() -> Client:
+    sid, token = _twilio_auth()
+    return Client(sid, token)
+
+
 async def _download_twilio_media(url: str) -> bytes:
     """
-    Fetch media from a Twilio-provided URL.
-    
-    Twilio media URLs usually redirect (307) to an S3 bucket.
-    The S3 URL is pre-signed and does NOT require the Twilio Basic Auth.
-    Passing Twilio auth to S3 will often cause a 403 or SignatureDoesNotMatch error.
+    Fetch media from a Twilio-provided URL using the Twilio REST client (per Twilio WhatsApp media tutorial).
     """
-    sid, token = _twilio_auth()
-    
-    async with httpx.AsyncClient(timeout=15) as client:
-        # 1. Request the Twilio URL with Auth, but prevent auto-following redirects
-        resp = await client.get(url, auth=(sid, token), follow_redirects=False)
-        
-        # 2. Check if we got a redirect (301, 302, 307)
-        if resp.status_code in (301, 302, 307):
-            # Extract the actual media URL (usually on S3)
-            redirect_url = resp.headers.get("Location")
-            if not redirect_url:
-                 raise HTTPException(status_code=502, detail="Twilio redirect missing Location header")
-            
-            # 3. Fetch the actual media from the new URL *without* auth
-            resp = await client.get(redirect_url)
-        
-        # 4. Handle errors
-        try:
-            resp.raise_for_status()
-        except httpx.HTTPStatusError as exc:
-            raise HTTPException(
-                status_code=502,
-                detail=f"Failed to fetch media content: {exc.response.status_code}"
-            ) from exc
-            
-        return resp.content
+    parsed = urlparse(url)
+    path_with_query = parsed.path + (f"?{parsed.query}" if parsed.query else "")
+    client = _twilio_client()
+
+    try:
+        # Twilio helper handles auth; use a relative path per their client.request docs.
+        response = await asyncio.to_thread(client.request, "GET", path_with_query)
+    except Exception as exc:  # noqa: BLE001
+        logging.exception("Twilio client request failed")
+        raise HTTPException(status_code=502, detail="Failed to fetch media from Twilio.") from exc
+
+    if response.status_code >= 400:
+        logging.error(
+            "Twilio media fetch failed: status=%s body=%s url=%s path=%s",
+            response.status_code,
+            response.text,
+            url,
+            path_with_query,
+        )
+        raise HTTPException(
+            status_code=502,
+            detail=f"Failed to fetch media from Twilio: {response.status_code}",
+        )
+
+    return response.content
 
 
 def _twiml_message(body: str, media_url: str | None = None) -> Response:
