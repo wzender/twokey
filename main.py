@@ -16,6 +16,7 @@ from fastapi.responses import Response
 from app import PHRASES, app
 from llm_service import analyze_audio
 from openai import OpenAI
+import requests
 
 server = FastAPI(title="Levantine Pronunciation Coach API")
 
@@ -102,23 +103,28 @@ def _twilio_client() -> Client:
     return Client(sid, token)
 
 
-async def _download_twilio_media(url: str) -> bytes:
-    client = _twilio_client()
 
-    # Parse the URL to extract path and host
-    parsed = urlparse(url)
-    path = parsed.path + ("?" + parsed.query if parsed.query else "")
+
+# Replace the entire _download_twilio_media function with this:
+async def _download_twilio_media(url: str) -> bytes:
+    """
+    Download media from Twilio using proper Basic Auth (AccountSID:AuthToken).
+    """
+    sid, token = _twilio_auth()
 
     try:
         response = await asyncio.to_thread(
-            client.request,
-            "GET",
-            path,
-            base="https://api.twilio.com",
-            auth=(client.username, client.password),  # username = SID, password = token
+            requests.get, url, auth=(sid, token), timeout=20
         )
-    except Exception as exc:
-        ...
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as exc:
+        logging.error("Twilio media download failed %s %s", exc.response.status_code, exc.response.text)
+        raise HTTPException(status_code=502, detail="Failed to fetch media from Twilio.") from exc
+    except requests.exceptions.RequestException as exc:
+        logging.exception("Network error downloading Twilio media")
+        raise HTTPException(status_code=502, detail="Failed to fetch media from Twilio.") from exc
+
+    return response.content
 
 
 def _twiml_message(body: str, media_url: str | None = None) -> Response:
