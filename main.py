@@ -150,6 +150,7 @@ async def whatsapp_voice_webhook(
     Twilio webhook to accept WhatsApp voice notes and return feedback via TwiML.
     """
     message_text = (body or "").strip().lower()
+    logging.info("WhatsApp webhook invoked: sender=%s media_url=%s content_type=%s body=%s", sender, media_url, media_content_type, message_text)
 
     # Step 1: Handle "start" to send the native phrase to practice.
     if not media_url and message_text == "start":
@@ -158,17 +159,60 @@ async def whatsapp_voice_webhook(
             "היי! שלחו הודעת קול עם התרגום לערבית לבנטינית.\n"
             f"משפט לתרגול: {phrase}"
         )
+        logging.info("Responding with start instructions and phrase")
         return _twiml_message(instructions)
 
     # Step 2: Handle missing media or non-audio.
     if num_media < 1 or not media_url:
+        logging.warning("Missing media in WhatsApp request: num_media=%s media_url=%s", num_media, media_url)
         return _twiml_message('שלחו "start" לקבלת משפט, ואז שלחו הודעת קול עם התרגום.')
 
     if media_content_type and not media_content_type.startswith("audio/"):
+        logging.warning("Invalid media content type: %s", media_content_type)
         return _twiml_message("ההודעה שקיבלתי אינה אודיו. שלחו הודעת קול חדשה.")
 
-    # Step 3: For testing, skip analysis and return a placeholder response.
-    return _twiml_message("analyzing ...")
+    # Step 3: Analyze the voice note against the practice phrase.
+    phrase = PHRASES[0]
+    try:
+        logging.info("Downloading media from Twilio: %s", media_url)
+        audio_bytes = await _download_twilio_media(media_url)
+        logging.info("Media downloaded, %d bytes", len(audio_bytes))
+
+        logging.info("Starting analysis with phrase context")
+        result = await analyze_audio(
+            audio_bytes,
+            phrase=phrase["native"],
+            hint=phrase.get("hint"),
+            arabic_transliteration=phrase.get("arabic_transliteration"),
+        )
+        logging.info("Analysis completed: %s", result)
+    except HTTPException as exc:
+        logging.exception("HTTPException during WhatsApp analysis: %s", exc.detail)
+        raise exc
+    except Exception as exc:  # noqa: BLE001
+        logging.exception("WhatsApp analysis failed with unexpected error")
+        return _twiml_message("לא הצלחתי לנתח את ההודעה. נסו שוב מאוחר יותר.")
+
+    transcription = result.get("transcription", "")
+    score = result.get("score", 0)
+    translation_score = result.get("translation_score", score)
+    pronunciation_score = result.get("pronunciation_score", score)
+    feedback = result.get("feedback", "")
+
+    sender_text = f"{sender} " if sender else ""
+    summary = (
+        f"{sender_text}תמלול: {transcription}\n"
+        f"ציון תרגום: {translation_score}/100 | ציון הגייה: {pronunciation_score}/100\n"
+        f"משוב: {feedback}"
+    )
+
+    # Build media URL for TTS so Twilio can fetch the audio response.
+    base_url = str(request.base_url).rstrip("/")
+    tts_payload = f"ציון {score}/100. {feedback}"
+    tts_url = f"{base_url}/api/whatsapp/tts?text={quote_plus(tts_payload)}"
+    logging.info("Responding with summary and TTS media URL: %s", tts_url)
+
+    return _twiml_message(summary, media_url=tts_url)
 
 
 @server.get("/api/whatsapp/tts")
