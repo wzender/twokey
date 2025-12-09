@@ -98,18 +98,37 @@ def _twilio_auth() -> tuple[str, str]:
 
 async def _download_twilio_media(url: str) -> bytes:
     """
-    Fetch media from a Twilio-provided URL (requires basic auth).
+    Fetch media from a Twilio-provided URL.
+    
+    Twilio media URLs usually redirect (307) to an S3 bucket.
+    The S3 URL is pre-signed and does NOT require the Twilio Basic Auth.
+    Passing Twilio auth to S3 will often cause a 403 or SignatureDoesNotMatch error.
     """
     sid, token = _twilio_auth()
+    
     async with httpx.AsyncClient(timeout=15) as client:
-        resp = await client.get(url, auth=(sid, token))
+        # 1. Request the Twilio URL with Auth, but prevent auto-following redirects
+        resp = await client.get(url, auth=(sid, token), follow_redirects=False)
+        
+        # 2. Check if we got a redirect (301, 302, 307)
+        if resp.status_code in (301, 302, 307):
+            # Extract the actual media URL (usually on S3)
+            redirect_url = resp.headers.get("Location")
+            if not redirect_url:
+                 raise HTTPException(status_code=502, detail="Twilio redirect missing Location header")
+            
+            # 3. Fetch the actual media from the new URL *without* auth
+            resp = await client.get(redirect_url)
+        
+        # 4. Handle errors
         try:
             resp.raise_for_status()
-        except httpx.HTTPStatusError as exc:  # noqa: B904
+        except httpx.HTTPStatusError as exc:
             raise HTTPException(
                 status_code=502,
-                detail=f"Failed to fetch media from Twilio: {exc.response.status_code}",
+                detail=f"Failed to fetch media content: {exc.response.status_code}"
             ) from exc
+            
         return resp.content
 
 
