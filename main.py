@@ -12,6 +12,7 @@ from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.wsgi import WSGIMiddleware
 from fastapi.responses import Response
+from urllib.parse import urlparse
 
 from app import PHRASES, app
 from llm_service import analyze_audio
@@ -105,24 +106,42 @@ def _twilio_client() -> Client:
 
 
 
-# Replace the entire _download_twilio_media function with this:
 async def _download_twilio_media(url: str) -> bytes:
     """
-    Download media from Twilio using proper Basic Auth (AccountSID:AuthToken).
+    Fetch media from a Twilio Media URL using the official Twilio REST client.
+    This is the method shown in Twilio's own WhatsApp voice-note tutorials.
     """
-    sid, token = _twilio_auth()
+    client = _twilio_client()        # Client(username=SID, password=AuthToken)
+
+    # Example url:
+    # https://api.twilio.com/2010-04-01/Accounts/ACxxx/Messages/MMxxx/Media/MExxx
+    parsed = urlparse(url)
+    path_with_query = parsed.path
+    if parsed.query:
+        path_with_query += "?" + parsed.query
 
     try:
         response = await asyncio.to_thread(
-            requests.get, url, auth=(sid, token), timeout=20
+            client.request,
+            method="GET",
+            uri=path_with_query,           # e.g. /2010-04-01/Accounts/AC.../Media/ME...
+            base_domain="api.twilio.com",  # important!
+            auth=(client.username, client.password),  # SID:Token → Basic Auth
         )
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as exc:
-        logging.error("Twilio media download failed %s %s", exc.response.status_code, exc.response.text)
-        raise HTTPException(status_code=502, detail="Failed to fetch media from Twilio.") from exc
-    except requests.exceptions.RequestException as exc:
-        logging.exception("Network error downloading Twilio media")
-        raise HTTPException(status_code=502, detail="Failed to fetch media from Twilio.") from exc
+    except Exception as exc:
+        logging.exception("Twilio client.request failed")
+        raise HTTPException(
+            status_code=502,
+            detail="Failed to fetch media from Twilio."
+        ) from exc
+
+    if response.status_code >= 400:
+        logging.error(
+            "Twilio media request failed: %s %s",
+            response.status_code,
+            response.content.decode(errors="ignore"),
+        )
+        raise HTTPException(status_code=502, detail="Failed to fetch media from Twilio.")
 
     return response.content
 
