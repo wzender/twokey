@@ -17,7 +17,8 @@ from urllib.parse import urlparse
 from app import PHRASES, app
 from llm_service import analyze_audio
 from openai import OpenAI
-import requests
+from urllib.parse import urlparse
+
 
 server = FastAPI(title="Levantine Pronunciation Coach API")
 
@@ -105,31 +106,28 @@ def _twilio_client() -> Client:
 
 
 
-
 async def _download_twilio_media(url: str) -> bytes:
     """
-    Fetch media from a Twilio Media URL using the official Twilio REST client.
-    This is the method shown in Twilio's own WhatsApp voice-note tutorials.
+    Fetch media from a Twilio-provided URL using the Twilio REST client.
     """
-    client = _twilio_client()        # Client(username=SID, password=AuthToken)
+    client = _twilio_client()  # Client initialized with SID and Auth Token
 
-    # Example url:
-    # https://api.twilio.com/2010-04-01/Accounts/ACxxx/Messages/MMxxx/Media/MExxx
+    # Parse the URL to extract the path and query
+    # Example URL: https://api.twilio.com/2010-04-01/Accounts/ACxxx/Messages/MMxxx/Media/MExxx
     parsed = urlparse(url)
-    path_with_query = parsed.path
+    path = parsed.path
     if parsed.query:
-        path_with_query += "?" + parsed.query
+        path += "?" + parsed.query
 
     try:
+        # Use client.request with the correct path
         response = await asyncio.to_thread(
             client.request,
             method="GET",
-            uri=path_with_query,           # e.g. /2010-04-01/Accounts/AC.../Media/ME...
-            base_domain="api.twilio.com",  # important!
-            auth=(client.username, client.password),  # SID:Token → Basic Auth
+            url=path,  # e.g., /2010-04-01/Accounts/ACxxx/Messages/MMxxx/Media/MExxx
         )
-    except Exception as exc:
-        logging.exception("Twilio client.request failed")
+    except Exception as exc:  # noqa: BLE001
+        logging.exception("Twilio client request failed")
         raise HTTPException(
             status_code=502,
             detail="Failed to fetch media from Twilio."
@@ -137,11 +135,15 @@ async def _download_twilio_media(url: str) -> bytes:
 
     if response.status_code >= 400:
         logging.error(
-            "Twilio media request failed: %s %s",
+            "Twilio media fetch failed: status=%s body=%s url=%s",
             response.status_code,
             response.content.decode(errors="ignore"),
+            url,
         )
-        raise HTTPException(status_code=502, detail="Failed to fetch media from Twilio.")
+        raise HTTPException(
+            status_code=502,
+            detail=f"Failed to fetch media from Twilio: {response.status_code}",
+        )
 
     return response.content
 
