@@ -167,41 +167,8 @@ async def whatsapp_voice_webhook(
     if media_content_type and not media_content_type.startswith("audio/"):
         return _twiml_message("ההודעה שקיבלתי אינה אודיו. שלחו הודעת קול חדשה.")
 
-    # Step 3: Analyze the voice note against the practice phrase.
-    phrase = PHRASES[0]
-    try:
-        audio_bytes = await _download_twilio_media(media_url)
-        result = await analyze_audio(
-            audio_bytes,
-            phrase=phrase["native"],
-            hint=phrase.get("hint"),
-            arabic_transliteration=phrase.get("arabic_transliteration"),
-        )
-    except HTTPException as exc:
-        raise exc
-    except Exception as exc:  # noqa: BLE001
-        logging.exception("WhatsApp analysis failed")
-        return _twiml_message("לא הצלחתי לנתח את ההודעה. נסו שוב מאוחר יותר.")
-
-    transcription = result.get("transcription", "")
-    score = result.get("score", 0)
-    translation_score = result.get("translation_score", score)
-    pronunciation_score = result.get("pronunciation_score", score)
-    feedback = result.get("feedback", "")
-
-    sender_text = f"{sender} " if sender else ""
-    summary = (
-        f"{sender_text}תמלול: {transcription}\n"
-        f"ציון תרגום: {translation_score}/100 | ציון הגייה: {pronunciation_score}/100\n"
-        f"משוב: {feedback}"
-    )
-
-    # Build media URL for TTS so Twilio can fetch the audio response.
-    base_url = str(request.base_url).rstrip("/")
-    tts_payload = f"ציון {score}/100. {feedback}"
-    tts_url = f"{base_url}/api/whatsapp/tts?text={quote_plus(tts_payload)}"
-
-    return _twiml_message(summary, media_url=tts_url)
+    # Step 3: For testing, skip analysis and return a placeholder response.
+    return _twiml_message("analyzing ...")
 
 
 @server.get("/api/whatsapp/tts")
