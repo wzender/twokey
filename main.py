@@ -106,24 +106,21 @@ async def _download_twilio_media(url: str) -> bytes:
     """
     Fetch media from a Twilio-provided URL using the Twilio REST client (per Twilio WhatsApp media tutorial).
     """
-    parsed = urlparse(url)
-    path_with_query = parsed.path + (f"?{parsed.query}" if parsed.query else "")
     client = _twilio_client()
 
     try:
-        # Twilio helper handles auth; use a relative path per their client.request docs.
-        response = await asyncio.to_thread(client.request, "GET", path_with_query)
+        # Twilio helper handles auth and redirects to the media location.
+        response = await asyncio.to_thread(client.request, "GET", url)
     except Exception as exc:  # noqa: BLE001
         logging.exception("Twilio client request failed")
         raise HTTPException(status_code=502, detail="Failed to fetch media from Twilio.") from exc
 
     if response.status_code >= 400:
         logging.error(
-            "Twilio media fetch failed: status=%s body=%s url=%s path=%s",
+            "Twilio media fetch failed: status=%s body=%s url=%s",
             response.status_code,
             response.text,
             url,
-            path_with_query,
         )
         raise HTTPException(
             status_code=502,
