@@ -3,15 +3,16 @@ from __future__ import annotations
 import logging
 import os
 from typing import Any, Dict
+from urllib.parse import quote_plus
 from xml.sax.saxutils import escape
 
 import httpx
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.wsgi import WSGIMiddleware
 from fastapi.responses import Response
 
-from app import app
+from app import PHRASES, app
 from llm_service import analyze_audio
 from openai import OpenAI
 
@@ -69,6 +70,21 @@ def _tts_client() -> OpenAI:
     return OpenAI(api_key=api_key)
 
 
+def _generate_tts_bytes(content: str) -> bytes:
+    try:
+        client = _tts_client()
+        speech = client.audio.speech.create(
+            model=os.environ.get("OPENAI_MODEL_TTS", "gpt-4o-mini-tts"),
+            voice=os.environ.get("OPENAI_TTS_VOICE", "alloy"),
+            input=content,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logging.exception("TTS generation failed")
+        raise HTTPException(status_code=500, detail="Failed to generate audio.") from exc
+
+    return speech.read()
+
+
 def _twilio_auth() -> tuple[str, str]:
     sid = os.environ.get("TWILIO_ACCOUNT_SID")
     token = os.environ.get("TWILIO_AUTH_TOKEN")
@@ -97,11 +113,13 @@ async def _download_twilio_media(url: str) -> bytes:
         return resp.content
 
 
-def _twiml_message(body: str) -> Response:
+def _twiml_message(body: str, media_url: str | None = None) -> Response:
     """
-    Return a minimal TwiML Message response.
+    Return a minimal TwiML Message response (optionally with media).
     """
-    xml = f"<Response><Message>{escape(body)}</Message></Response>"
+    body_xml = f"<Body>{escape(body)}</Body>" if body else ""
+    media_xml = f"<Media>{escape(media_url)}</Media>" if media_url else ""
+    xml = f"<Response><Message>{body_xml}{media_xml}</Message></Response>"
     return Response(content=xml, media_type="application/xml")
 
 
@@ -114,24 +132,14 @@ async def tts(text: Dict[str, str]) -> Response:
     if not content or not isinstance(content, str):
         raise HTTPException(status_code=400, detail="Missing text for TTS.")
 
-    try:
-        client = _tts_client()
-        speech = client.audio.speech.create(
-            model=os.environ.get("OPENAI_MODEL_TTS", "gpt-4o-mini-tts"),
-            voice=os.environ.get("OPENAI_TTS_VOICE", "alloy"),
-            input=content,
-        )
-    except Exception as exc:  # noqa: BLE001
-        logging.exception("TTS generation failed")
-        raise HTTPException(status_code=500, detail="Failed to generate audio.") from exc
-
-    audio_bytes = speech.read()
+    audio_bytes = _generate_tts_bytes(content)
     headers = {"Content-Disposition": 'attachment; filename="feedback.mp3"'}
     return Response(content=audio_bytes, media_type="audio/mpeg", headers=headers)
 
 
 @server.post("/api/whatsapp")
 async def whatsapp_voice_webhook(
+    request: Request,
     num_media: int = Form(0, alias="NumMedia"),
     media_url: str | None = Form(None, alias="MediaUrl0"),
     media_content_type: str | None = Form(None, alias="MediaContentType0"),
@@ -141,22 +149,35 @@ async def whatsapp_voice_webhook(
     """
     Twilio webhook to accept WhatsApp voice notes and return feedback via TwiML.
     """
+    message_text = (body or "").strip().lower()
+
+    # Step 1: Handle "start" to send the native phrase to practice.
+    if not media_url and message_text == "start":
+        phrase = PHRASES[0]["native"]
+        instructions = (
+            "היי! שלחו הודעת קול עם התרגום לערבית לבנטינית.\n"
+            f"משפט לתרגול: {phrase}"
+        )
+        return _twiml_message(instructions)
+
+    # Step 2: Handle missing media or non-audio.
     if num_media < 1 or not media_url:
-        return _twiml_message("שלחו הודעת קול בוואטסאפ כדי לקבל משוב הגייה.")
+        return _twiml_message('שלחו "start" לקבלת משפט, ואז שלחו הודעת קול עם התרגום.')
 
     if media_content_type and not media_content_type.startswith("audio/"):
         return _twiml_message("ההודעה שקיבלתי אינה אודיו. שלחו הודעת קול חדשה.")
 
+    # Step 3: Analyze the voice note against the practice phrase.
+    phrase = PHRASES[0]
     try:
         audio_bytes = await _download_twilio_media(media_url)
         result = await analyze_audio(
             audio_bytes,
-            phrase=body,
-            hint=None,
-            arabic_transliteration=None,
+            phrase=phrase["native"],
+            hint=phrase.get("hint"),
+            arabic_transliteration=phrase.get("arabic_transliteration"),
         )
     except HTTPException as exc:
-        # Pass along explicit HTTP errors (e.g., missing creds).
         raise exc
     except Exception as exc:  # noqa: BLE001
         logging.exception("WhatsApp analysis failed")
@@ -164,15 +185,36 @@ async def whatsapp_voice_webhook(
 
     transcription = result.get("transcription", "")
     score = result.get("score", 0)
+    translation_score = result.get("translation_score", score)
+    pronunciation_score = result.get("pronunciation_score", score)
     feedback = result.get("feedback", "")
 
     sender_text = f"{sender} " if sender else ""
-    reply = (
+    summary = (
         f"{sender_text}תמלול: {transcription}\n"
-        f"ציון כללי: {score}/100\n"
+        f"ציון תרגום: {translation_score}/100 | ציון הגייה: {pronunciation_score}/100\n"
         f"משוב: {feedback}"
     )
-    return _twiml_message(reply)
+
+    # Build media URL for TTS so Twilio can fetch the audio response.
+    base_url = str(request.base_url).rstrip("/")
+    tts_payload = f"ציון {score}/100. {feedback}"
+    tts_url = f"{base_url}/api/whatsapp/tts?text={quote_plus(tts_payload)}"
+
+    return _twiml_message(summary, media_url=tts_url)
+
+
+@server.get("/api/whatsapp/tts")
+async def whatsapp_tts(text: str | None = None) -> Response:
+    """
+    Serve TTS audio for WhatsApp replies. Used as the Media URL in TwiML.
+    """
+    if not text:
+        raise HTTPException(status_code=400, detail="Missing text for TTS.")
+
+    audio_bytes = _generate_tts_bytes(text)
+    headers = {"Content-Disposition": 'attachment; filename="whatsapp-feedback.mp3"'}
+    return Response(content=audio_bytes, media_type="audio/mpeg", headers=headers)
 
 
 # Mount Dash under the root path after API routes are registered.
@@ -182,5 +224,5 @@ server.mount("/", WSGIMiddleware(app.server))
 if __name__ == "__main__":
     import uvicorn
 
-    port = int(os.environ.get("PORT", "8000"))
+    port = int(os.environ.get("PORT", "10000"))
     uvicorn.run("main:server", host="0.0.0.0", port=port, reload=True)

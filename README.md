@@ -13,7 +13,7 @@ Core user journey:
 * **AI:** OpenAI Whisper for transcription + GPT (e.g., `gpt-4o-mini`) for scoring/feedback. (No Gemini LLMs.)
 * **Deployment:** Render.com (Python Environment) or any HTTPS host.
 * **Audio Handling:** JavaScript (MediaRecorder API) via Dash Clientside Callbacks.
-* **Optional WhatsApp Ingest:** Twilio WhatsApp webhook can forward voice notes to `/api/whatsapp`.
+* **Optional WhatsApp Ingest:** Twilio WhatsApp webhook can forward voice notes to `/api/whatsapp` (media served from `/api/whatsapp/tts`).
 
 ## 3. Directory Structure
 Adhere strictly to this file structure:
@@ -112,14 +112,20 @@ Ensure ffmpeg is not required if possible (send raw bytes to OpenAI), but if nee
    ```
 3. Run the app locally:
    ```bash
-   uvicorn main:server --host 0.0.0.0 --port 8000 --reload
+   uvicorn main:server --host 0.0.0.0 --port 10000 --reload
    ```
-4. Open http://localhost:8000 and tap **Record** to send audio to `/api/analyze`.
+4. Open http://localhost:10000 and tap **Record** to send audio to `/api/analyze`.
 
 ## 8. WhatsApp Voice via Twilio (optional)
 - Set environment variables `TWILIO_ACCOUNT_SID` and `TWILIO_AUTH_TOKEN` so the server can fetch media from Twilio.
 - Point your Twilio WhatsApp sandbox/number webhook to `POST https://<your-domain>/api/whatsapp`.
-- Send a WhatsApp voice note; the webhook downloads the media, runs the same analysis pipeline, and replies with a TwiML message containing transcription, score, and feedback.
+- Interaction flow:
+  1. Send `start` to the Twilio number to receive the practice sentence (Hebrew).
+  2. Send a voice note with your Levantine Arabic translation.
+  3. The webhook analyzes the audio and replies with text feedback + a voice message (media pulled from `/api/whatsapp/tts`).
+- API routes used for WhatsApp:
+  - `POST /api/whatsapp` – Twilio inbound webhook (text/voice).
+  - `GET /api/whatsapp/tts` – Twilio media URL to fetch voiced feedback (OpenAI TTS).
 
 ## 9. Deploying to Render and connecting Twilio
 - Render setup: push the repo, select “Web Service”, use the included `render.yaml`, and set env vars: `OPENAI_API_KEY`, optional `OPENAI_MODEL_TRANSCRIBE`/`OPENAI_MODEL_EVAL`, and `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN` for WhatsApp.
