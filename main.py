@@ -124,7 +124,7 @@ async def _download_twilio_media(url: str) -> bytes:
         response = await asyncio.to_thread(
             client.request,
             method="GET",
-            url=path,  # e.g., /2010-04-01/Accounts/ACxxx/Messages/MMxxx/Media/MExxx
+            uri=path,  # client.request expects `uri`, not `url`
         )
     except Exception as exc:  # noqa: BLE001
         logging.exception("Twilio client request failed")
