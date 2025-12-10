@@ -12,13 +12,9 @@ from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.wsgi import WSGIMiddleware
 from fastapi.responses import Response
-from urllib.parse import urlparse
-
 from app import PHRASES, app
 from llm_service import analyze_audio
 from openai import OpenAI
-from urllib.parse import urlparse
-
 
 server = FastAPI(title="Levantine Pronunciation Coach API")
 
@@ -112,19 +108,17 @@ async def _download_twilio_media(url: str) -> bytes:
     """
     client = _twilio_client()  # Client initialized with SID and Auth Token
 
-    # Parse the URL to extract the path and query
-    # Example URL: https://api.twilio.com/2010-04-01/Accounts/ACxxx/Messages/MMxxx/Media/MExxx
     parsed = urlparse(url)
-    path = parsed.path
-    if parsed.query:
-        path += "?" + parsed.query
+    if not parsed.scheme:
+        raise HTTPException(status_code=400, detail="Invalid Twilio media URL.")
 
     try:
         # Use client.request with the correct path
         response = await asyncio.to_thread(
             client.request,
             method="GET",
-            uri=path,  # client.request expects `uri`, not `url`
+            uri=url,  # Twilio client expects a fully-qualified URL
+            allow_redirects=True,  # Media URLs can redirect to storage
         )
     except Exception as exc:  # noqa: BLE001
         logging.exception("Twilio client request failed")
