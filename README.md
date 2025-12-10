@@ -132,3 +132,7 @@ Ensure ffmpeg is not required if possible (send raw bytes to OpenAI), but if nee
 - Start command is already set to `uvicorn main:server --host 0.0.0.0 --port $PORT`.
 - After deploy, copy the Render service URL (e.g., `https://your-app.onrender.com`) and set the Twilio WhatsApp sandbox/number webhook to `POST https://your-app.onrender.com/api/whatsapp`.
 - Only OpenAI models are used (Whisper + GPT). No Gemini models are required or used in any deployment.
+
+
+Example media URL format (replace with your own IDs):
+`https://api.twilio.com/2010-04-01/Accounts/ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/Messages/MMXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/Media/MEXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`

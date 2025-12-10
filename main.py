@@ -4,7 +4,8 @@ import asyncio
 import logging
 import os
 from typing import Any, Dict
-from urllib.parse import quote_plus, urlparse
+from urllib.parse import quote_plus
+import httpx
 from xml.sax.saxutils import escape
 
 from twilio.rest import Client
@@ -104,42 +105,32 @@ def _twilio_client() -> Client:
 
 async def _download_twilio_media(url: str) -> bytes:
     """
-    Fetch media from a Twilio-provided URL using the Twilio REST client.
+    Fetch media from a Twilio-provided URL using an async HTTP client.
     """
-    client = _twilio_client()  # Client initialized with SID and Auth Token
+    # If Twilio provides a relative URL, resolve it to an absolute one.
+    if not url.startswith("http"):
+        url = f"https://api.twilio.com{url}"
 
-    parsed = urlparse(url)
-    if not parsed.scheme:
-        raise HTTPException(status_code=400, detail="Invalid Twilio media URL.")
-
-    try:
-        # Use client.request with the correct path
-        response = await asyncio.to_thread(
-            client.request,
-            method="GET",
-            uri=url,  # Twilio client expects a fully-qualified URL
-            allow_redirects=True,  # Media URLs can redirect to storage
-        )
-    except Exception as exc:  # noqa: BLE001
-        logging.exception("Twilio client request failed")
-        raise HTTPException(
-            status_code=502,
-            detail="Failed to fetch media from Twilio."
-        ) from exc
-
-    if response.status_code >= 400:
-        logging.error(
-            "Twilio media fetch failed: status=%s body=%s url=%s",
-            response.status_code,
-            response.content.decode(errors="ignore"),
-            url,
-        )
-        raise HTTPException(
-            status_code=502,
-            detail=f"Failed to fetch media from Twilio: {response.status_code}",
-        )
-
-    return response.content
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(url, follow_redirects=True)
+            response.raise_for_status()  # Raise an exception for HTTP errors
+            return response.content
+        except httpx.RequestError as exc:
+            logging.error(f"Failed to fetch media from Twilio via httpx: {exc}")
+            raise HTTPException(
+                status_code=502, detail="Failed to fetch media from Twilio."
+            ) from exc
+        except httpx.HTTPStatusError as exc:
+            logging.error(
+                "Twilio media fetch failed: status=%s body=%s",
+                exc.response.status_code,
+                exc.response.text,
+            )
+            raise HTTPException(
+                status_code=502,
+                detail=f"Failed to fetch media from Twilio: {exc.response.status_code}",
+            ) from exc
 
 
 def _twiml_message(body: str, media_url: str | None = None) -> Response:
