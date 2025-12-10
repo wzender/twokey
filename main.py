@@ -111,7 +111,11 @@ async def _download_twilio_media(url: str) -> bytes:
     if not url.startswith("http"):
         url = f"https://api.twilio.com{url}"
 
-    async with httpx.AsyncClient() as client:
+    sid, token = _twilio_auth()
+    auth = httpx.BasicAuth(sid, token)
+
+    # Twilio media URLs require basic auth with the account SID and token.
+    async with httpx.AsyncClient(auth=auth, timeout=30.0) as client:
         try:
             response = await client.get(url, follow_redirects=True)
             response.raise_for_status()  # Raise an exception for HTTP errors
