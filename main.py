@@ -7,8 +7,6 @@ from typing import Any, Dict
 from urllib.parse import quote_plus
 import httpx
 from xml.sax.saxutils import escape
-
-from twilio.rest import Client
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.wsgi import WSGIMiddleware
@@ -44,6 +42,12 @@ async def analyze(
         raise HTTPException(status_code=400, detail="File must be a WAV audio.")
 
     audio_bytes = await file.read()
+    logging.info(
+        "Analyze API: received file content_type=%s size=%d phrase_provided=%s",
+        file.content_type,
+        len(audio_bytes),
+        bool(phrase),
+    )
     if not audio_bytes:
         raise HTTPException(status_code=400, detail="Empty audio file received.")
 
@@ -74,6 +78,7 @@ def _tts_client() -> OpenAI:
 def _generate_tts_bytes(content: str) -> bytes:
     try:
         client = _tts_client()
+        logging.info("Generating TTS audio: %d characters", len(content))
         speech = client.audio.speech.create(
             model=os.environ.get("OPENAI_MODEL_TTS", "gpt-4o-mini-tts"),
             voice=os.environ.get("OPENAI_TTS_VOICE", "alloy"),
@@ -97,12 +102,6 @@ def _twilio_auth() -> tuple[str, str]:
     return sid, token
 
 
-def _twilio_client() -> Client:
-    sid, token = _twilio_auth()
-    return Client(sid, token)
-
-
-
 async def _download_twilio_media(url: str) -> bytes:
     """
     Fetch media from a Twilio-provided URL using an async HTTP client.
@@ -110,6 +109,9 @@ async def _download_twilio_media(url: str) -> bytes:
     # If Twilio provides a relative URL, resolve it to an absolute one.
     if not url.startswith("http"):
         url = f"https://api.twilio.com{url}"
+        logging.info("Resolved relative Twilio media URL to absolute: %s", url)
+    else:
+        logging.info("Using Twilio media URL: %s", url)
 
     sid, token = _twilio_auth()
     auth = httpx.BasicAuth(sid, token)
@@ -117,7 +119,13 @@ async def _download_twilio_media(url: str) -> bytes:
     # Twilio media URLs require basic auth with the account SID and token.
     async with httpx.AsyncClient(auth=auth, timeout=30.0) as client:
         try:
+            logging.info("Requesting media from Twilio (auth SID only)")
             response = await client.get(url, follow_redirects=True)
+            logging.info(
+                "Twilio media response: status=%s content_length=%s",
+                response.status_code,
+                response.headers.get("Content-Length"),
+            )
             response.raise_for_status()  # Raise an exception for HTTP errors
             return response.content
         except httpx.RequestError as exc:
@@ -156,7 +164,9 @@ async def tts(text: Dict[str, str]) -> Response:
     if not content or not isinstance(content, str):
         raise HTTPException(status_code=400, detail="Missing text for TTS.")
 
+    logging.info("TTS endpoint invoked: text_length=%d", len(content))
     audio_bytes = _generate_tts_bytes(content)
+    logging.info("TTS audio generated: %d bytes", len(audio_bytes))
     headers = {"Content-Disposition": 'attachment; filename="feedback.mp3"'}
     return Response(content=audio_bytes, media_type="audio/mpeg", headers=headers)
 
@@ -175,6 +185,12 @@ async def whatsapp_voice_webhook(
     """
     message_text = (body or "").strip().lower()
     logging.info("WhatsApp webhook invoked: sender=%s media_url=%s content_type=%s body=%s", sender, media_url, media_content_type, message_text)
+    logging.info(
+        "WhatsApp form details: NumMedia=%s From=%s ContentType=%s",
+        num_media,
+        sender,
+        media_content_type,
+    )
 
     # Step 1: Handle "start" to send the native phrase to practice.
     if not media_url and message_text == "start":
@@ -228,6 +244,13 @@ async def whatsapp_voice_webhook(
         f"{sender_text}תמלול: {transcription}\n"
         f"ציון תרגום: {translation_score}/100 | ציון הגייה: {pronunciation_score}/100\n"
         f"משוב: {feedback}"
+    )
+    logging.info(
+        "Summary prepared: transcription_len=%d feedback_len=%d translation_score=%s pronunciation_score=%s",
+        len(transcription),
+        len(feedback),
+        translation_score,
+        pronunciation_score,
     )
 
     # Build media URL for TTS so Twilio can fetch the audio response.
