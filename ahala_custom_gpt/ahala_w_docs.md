@@ -65,7 +65,9 @@ Choose **exactly one**:
 4. ״התרגום טוב וברור, רק ליטושים קטנים נחוצים.״
 5. ״התרגום מצוין — נשמע טבעי וברור!״
 
-Then give **3-4 short tips max**, focus on the student response, for example:
+Then give detailed explanation for each incorrectly pronounced word
+say the student Arabic word and than the correct Arabic one.
+common mistakes (in general, just examples, not necessarily  in the student output)
 
 1. ח במקום ח' ולהיפך (למשל במילה אַח'וּי)
 2. ס במקום צ ולהיפך (למשל במילה צַאחְבִּי)
