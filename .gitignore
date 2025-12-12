@@ -11,3 +11,4 @@ dist/
 **venv*/
 *.oga
 *.ogg
+*.xlsx
