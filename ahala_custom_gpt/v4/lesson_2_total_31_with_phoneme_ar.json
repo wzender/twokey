@@ -1,0 +1,281 @@
+[
+  {
+    "lesson_id": 2,
+    "sentence_id": 1,
+    "prompt_he": "את אכלת עגבנייה על השולחן",
+    "answer_ar": "إنتِ أكلتي بندورة على الطاولة",
+    "answer_ar_he_transliteration": "אִנְתִי אַכַּלְתִי בַּנְדוֹרַה עַלַא אֵ(ל)טַّאוְלֵה",
+    "phoneme_key": "NT|KLTY|BNDWR|ALY|TWL",
+    "phoneme_ar": "نت|كلتي|بندور|علي|تول"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 2,
+    "prompt_he": "אתה ישבת בשכונה",
+    "answer_ar": "إنتَ قعدت في الحارة",
+    "answer_ar_he_transliteration": "אִנְתֵ קַעַדְת פִי אֵלְחַארַה",
+    "phoneme_key": "NT|KADT|FY|HR",
+    "phoneme_ar": "نت|كعدت|في|هر"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 3,
+    "prompt_he": "הוא ישב על הכיסא ואכל פלאפל",
+    "answer_ar": "هو قعد على الكرسي وأكل فلافل",
+    "answer_ar_he_transliteration": "הוּّ קַעַד עַלַא אֵלְכֻּרְסִי וּאַכַּל פַלַאפֵל",
+    "phoneme_key": "HW|KAD|ALY|KRSY|WKL|FLFL",
+    "phoneme_ar": "هو|كعد|علي|كرسي|وكل|فلفل"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 4,
+    "prompt_he": "היא פתחה את החלון",
+    "answer_ar": "هي فتحت الشباك",
+    "answer_ar_he_transliteration": "הִיֵّ פַתְחַת אֵ(ל)שֻّבַּّאכּ",
+    "phoneme_key": "HY|FTHT|SHBK",
+    "phoneme_ar": "هي|فتهت|شبك"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 5,
+    "prompt_he": "אני שאלתי את הרופא",
+    "answer_ar": "أنا سألت الدكتور",
+    "answer_ar_he_transliteration": "אַנַא סַאַלֵת אֵ(ל)דַّכְּתוֹר",
+    "phoneme_key": "N|SLT|DKTWR",
+    "phoneme_ar": "ن|سلت|دكتور"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 6,
+    "prompt_he": "אנחנו פתחנו את הדלת",
+    "answer_ar": "إحنا فتحنا الباب",
+    "answer_ar_he_transliteration": "אִחְנַא פַתַחְנַא אֵלְבַּאבּ",
+    "phoneme_key": "HN|FTHN|B",
+    "phoneme_ar": "هن|فتهن|ب"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 7,
+    "prompt_he": "אתם ישבתם על השולחן",
+    "answer_ar": "إنتو قعدتو على الطاولة",
+    "answer_ar_he_transliteration": "אִנְתוּ קַעַדְתוּ עַלַא אֵ(ל)טַّאוְלֵה",
+    "phoneme_key": "NTW|KADTW|ALY|TWL",
+    "phoneme_ar": "نتو|كعدتو|علي|تول"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 8,
+    "prompt_he": "הם שאלו את המורה",
+    "answer_ar": "هم سألوا المعلّم",
+    "answer_ar_he_transliteration": "הֹםّ סַאַלוּ אֵלְמְעַלֵّם",
+    "phoneme_key": "HM|SLW|MALM",
+    "phoneme_ar": "هم|سلو|معلم"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 9,
+    "prompt_he": "הוא אכל את האוכל על החלון",
+    "answer_ar": "هو أكل الأكل على الشباك",
+    "answer_ar_he_transliteration": "הוּّ אַכַּל אֵלְאַכֵּל עַלַא אֵ(ל)שֻّבַּّאכּ",
+    "phoneme_key": "HW|KL|KL|ALY|SHBK",
+    "phoneme_ar": "هو|كل|كل|علي|شبك"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 10,
+    "prompt_he": "היא ישבה עם אח שלה",
+    "answer_ar": "هي قعدت مع أخوها",
+    "answer_ar_he_transliteration": "הִיֵّ קַעְדַת מַעְ אַחַ'וּהַא",
+    "phoneme_key": "HY|KADT|MA|KHWH",
+    "phoneme_ar": "هي|كعدت|مع|خوه"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 11,
+    "prompt_he": "את שאלת את החבר",
+    "answer_ar": "إنتِ سألتي الصاحب",
+    "answer_ar_he_transliteration": "אִנְתִי סַאַלְתִי אֵ(ל)צַّאחֵבּ",
+    "phoneme_key": "NT|SLTY|SHB",
+    "phoneme_ar": "نت|سلتي|سهب"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 12,
+    "prompt_he": "הם פתחו את החלון",
+    "answer_ar": "هم فتحوا الشباك",
+    "answer_ar_he_transliteration": "הֹםّ פַתַחוּ אֵ(ל)שֻّבַּّאכּ",
+    "phoneme_key": "HM|FTHW|SHBK",
+    "phoneme_ar": "هم|فتهو|شبك"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 13,
+    "prompt_he": "אתם אכלתם באוטו",
+    "answer_ar": "إنتو أكلتو في السيارة",
+    "answer_ar_he_transliteration": "אִנְתוּ אַכַּלְתוּ פִי (אֵ(ל)סַّיַّארַה",
+    "phoneme_key": "NTW|KLTW|FY|SYR",
+    "phoneme_ar": "نتو|كلتو|في|سير"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 14,
+    "prompt_he": "אני ישבתי בבית היום",
+    "answer_ar": "أنا قعدت في البيت اليوم",
+    "answer_ar_he_transliteration": "אַנַא קַעַדְת פִי אֵלְבֵּית אֵֵלְיוֹם",
+    "phoneme_key": "N|KADT|FY|BYT|YWM",
+    "phoneme_ar": "ن|كعدت|في|بيت|يوم"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 15,
+    "prompt_he": "אתה פתחת את המטוס",
+    "answer_ar": "إنتَ فتحت الطيّارة",
+    "answer_ar_he_transliteration": "אִנְתֵ פַתַחְת אֵ(ל)טַّיַّארַה",
+    "phoneme_key": "NT|FTHT|TYR",
+    "phoneme_ar": "نت|فتهت|تير"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 16,
+    "prompt_he": "אנחנו שאלנו את הילד שאלה",
+    "answer_ar": "إحنا سألنا الولد سؤال",
+    "answer_ar_he_transliteration": "אִחְנַא סַאַלְנַא אֵלְוַלַד סֻאַאל",
+    "phoneme_key": "HN|SLN|WLD|SL",
+    "phoneme_ar": "هن|سلن|ولد|سل"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 17,
+    "prompt_he": "הוא פתח את הדלת לכלב",
+    "answer_ar": "هو فتح الباب للكلب",
+    "answer_ar_he_transliteration": "הוּّ פַתַח אֵלְבַּאבּ לַ(אֵ)לְכַּלְבּ",
+    "phoneme_key": "HW|FTH|B|LKLB",
+    "phoneme_ar": "هو|فته|ب|لكلب"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 18,
+    "prompt_he": "היא פתחה את הדלת ואכלה עם אחמד",
+    "answer_ar": "هي فتحت الباب وأكلت مع أحمد",
+    "answer_ar_he_transliteration": "הִיֵّ פַתְחַת אֵלְבַּאבּ וּאַכְּלַת מַע אַחְמַד",
+    "phoneme_key": "HY|FTHT|B|WKLT|MA|HMD",
+    "phoneme_ar": "هي|فتهت|ب|وكلت|مع|همد"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 19,
+    "prompt_he": "את פתחת את השולחן הגדול",
+    "answer_ar": "إنتِ فتحتِ الطاولة الكبيرة",
+    "answer_ar_he_transliteration": "אִנְתִי פַתַחְתִי אֵ(ל)טַّאוְלֵה אֵלְכְּבִּירֵ",
+    "phoneme_key": "NT|FTHT|TWL|KBYR",
+    "phoneme_ar": "نت|فتهت|تول|كبير"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 20,
+    "prompt_he": "הם שאלו את החבר שאלה גדולה",
+    "answer_ar": "هم سألوا الصاحب سؤال كبير",
+    "answer_ar_he_transliteration": "הֹםّ סַאַלוּ אֵ(ל)צַّאחֵבּ סֻאַאל כְּבִּיר",
+    "phoneme_key": "HM|SLW|SHB|SL|KBYR",
+    "phoneme_ar": "هم|سلو|سهب|سل|كبير"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 21,
+    "prompt_he": "אתה אכלת פלאפל על השולחן",
+    "answer_ar": "إنتَ أكلت فلافل على الطاولة",
+    "answer_ar_he_transliteration": "אִנְתֵ אַכַּלְת פַלַאפל עַלַא אֵ(ל)טַّאוְלֵה",
+    "phoneme_key": "NT|KLT|FLFL|ALY|TWL",
+    "phoneme_ar": "نت|كلت|فلفل|علي|تول"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 22,
+    "prompt_he": "אתם פתחתם את הדלת היום",
+    "answer_ar": "إنتو فتحتو الباب اليوم",
+    "answer_ar_he_transliteration": "אִנְתוּ פַתַחְתוּ אֵלְבַּאבּ אֵלְיוֹם",
+    "phoneme_key": "NTW|FTHTW|B|YWM",
+    "phoneme_ar": "نتو|فتهتو|ب|يوم"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 23,
+    "prompt_he": "היא שאלה את הרופא",
+    "answer_ar": "هي سألت الدكتور",
+    "answer_ar_he_transliteration": "הִיֵّ סַאְלַת אֵ(ל)דַّכְּתוֹר",
+    "phoneme_key": "HY|SLT|DKTWR",
+    "phoneme_ar": "هي|سلت|دكتور"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 24,
+    "prompt_he": "אני אכלתי עגבנייה עם אבא שלי",
+    "answer_ar": "أنا أكلت بندورة مع أبوي",
+    "answer_ar_he_transliteration": "אַנַא אַכַּלְת בַּנְדוֹרַה מַע אַבּוּי",
+    "phoneme_key": "N|KLT|BNDWR|MA|BWY",
+    "phoneme_ar": "ن|كلت|بندور|مع|بوي"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 25,
+    "prompt_he": "אנחנו ישבנו בשכונה",
+    "answer_ar": "إحنا قعدنا في الحارة",
+    "answer_ar_he_transliteration": "אִחְנַא קַעַדְנַא פִי אֵלְחַארַה",
+    "phoneme_key": "HN|KADN|FY|HR",
+    "phoneme_ar": "هن|كعدن|في|هر"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 26,
+    "prompt_he": "הוא שאל את המורה שאלה",
+    "answer_ar": "هو سأل المعلّم سؤال",
+    "answer_ar_he_transliteration": "הוּّ סַאַל אֵלְמְעַלֵّם סֻאַאל",
+    "phoneme_key": "HW|SL|MALM|SL",
+    "phoneme_ar": "هو|سل|معلم|سل"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 27,
+    "prompt_he": "אתה ישבת עם הכלב",
+    "answer_ar": "إنتَ قعدت مع الكلب",
+    "answer_ar_he_transliteration": "אִנְתֵ קַעַדְת מַעְ אֵלְכַּלְבּ",
+    "phoneme_key": "NT|KADT|MA|KLB",
+    "phoneme_ar": "نت|كعدت|مع|كلب"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 28,
+    "prompt_he": "היא אכלה את האוכל על החלון",
+    "answer_ar": "هي أكلت الأكل على الشباك",
+    "answer_ar_he_transliteration": "הִיֵّ אַכְּלַת אֵלְאַכֵּל עַלַא אֵ(ל)שֻّבַּّאכּ",
+    "phoneme_key": "HY|KLT|KL|ALY|SHBK",
+    "phoneme_ar": "هي|كلت|كل|علي|شبك"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 29,
+    "prompt_he": "את פתחת את המטוס",
+    "answer_ar": "إنتِ فتحتِ الطيّارة",
+    "answer_ar_he_transliteration": "אִנְתִי פַתַחְתִי אֵ(ל)טַّיַّארַה",
+    "phoneme_key": "NT|FTHT|TYR",
+    "phoneme_ar": "نت|فتهت|تير"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 30,
+    "prompt_he": "אנחנו שאלנו את החבר וישבנו",
+    "answer_ar": "إحنا سألنا الصاحب وقعدنا",
+    "answer_ar_he_transliteration": "אִחְנַא סַאַלְנַא אֵ(ל)צַّאחֵבּ וּקַעַדְנַא",
+    "phoneme_key": "HN|SLN|SHB|WKADN",
+    "phoneme_ar": "هن|سلن|سهب|وكعدن"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 31,
+    "prompt_he": "הם אכלו עגבנייה מהשולחן",
+    "answer_ar": "هم أكلوا بندورة من الطاولة",
+    "answer_ar_he_transliteration": "הֹםّ אַכְּלוּ בַּנְדוֹרַה מִן אֵ(ל)טַّאוְלֵה",
+    "phoneme_key": "HM|KLW|BNDWR|MN|TWL",
+    "phoneme_ar": "هم|كلو|بندور|من|تول"
+  }
+]

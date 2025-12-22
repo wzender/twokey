@@ -129,5 +129,92 @@
     "lesson_id": 2,
     "sentence_id": 19,
     "prompt_he": "את פתחת את השולחן הגדול",
-    "accepted_answers": "إنتِ فتحتِ الطاولة ا_
+    "accepted_answers": "إنتِ فتحتِ الطاولة الكبيرة",
+    "answer_he_tatiq": "אִנְתִי פַתַחְתִי אֵ(ל)טַّאוְלֵה אֵלְכְּבִּירֵ"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 20,
+    "prompt_he": "הם שאלו את החבר שאלה גדולה",
+    "accepted_answers": "هم سألوا الصاحب سؤال كبير",
+    "answer_he_tatiq": "הֹםّ סַאַלוּ אֵ(ל)צַّאחֵבּ סֻאַאל כְּבִּיר"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 21,
+    "prompt_he": "אתה אכלת פלאפל על השולחן",
+    "accepted_answers": "إنتَ أكلت فلافل على الطاولة",
+    "answer_he_tatiq": "אִנְתֵ אַכַּלְת פַלַאפל עַלַא אֵ(ל)טַّאוְלֵה"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 22,
+    "prompt_he": "אתם פתחתם את הדלת היום",
+    "accepted_answers": "إنتو فتحتو الباب اليوم",
+    "answer_he_tatiq": "אִנְתוּ פַתַחְתוּ אֵלְבַּאבּ אֵלְיוֹם"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 23,
+    "prompt_he": "היא שאלה את הרופא",
+    "accepted_answers": "هي سألت الدكتور",
+    "answer_he_tatiq": "הִיֵّ סַאְלַת אֵ(ל)דַّכְּתוֹר"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 24,
+    "prompt_he": "אני אכלתי עגבנייה עם אבא שלי",
+    "accepted_answers": "أنا أكلت بندورة مع أبوي",
+    "answer_he_tatiq": "אַנַא אַכַּלְת בַּנְדוֹרַה מַע אַבּוּי"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 25,
+    "prompt_he": "אנחנו ישבנו בשכונה",
+    "accepted_answers": "إحنا قعدنا في الحارة",
+    "answer_he_tatiq": "אִחְנַא קַעַדְנַא פִי אֵלְחַארַה"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 26,
+    "prompt_he": "הוא שאל את המורה שאלה",
+    "accepted_answers": "هو سأل المعلّم سؤال",
+    "answer_he_tatiq": "הוּّ סַאַל אֵלְמְעַלֵّם סֻאַאל"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 27,
+    "prompt_he": "אתה ישבת עם הכלב",
+    "accepted_answers": "إنتَ قعدت مع الكلب",
+    "answer_he_tatiq": "אִנְתֵ קַעַדְת מַעְ אֵלְכַּלְבּ"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 28,
+    "prompt_he": "היא אכלה את האוכל על החלון",
+    "accepted_answers": "هي أكلت الأكل على الشباك",
+    "answer_he_tatiq": "הִיֵّ אַכְּלַת אֵלְאַכֵּל עַלַא אֵ(ל)שֻّבַּّאכּ"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 29,
+    "prompt_he": "את פתחת את המטוס",
+    "accepted_answers": "إنتِ فتحتِ الطيّارة",
+    "answer_he_tatiq": "אִנְתִי פַתַחְתִי אֵ(ל)טַّיַّארַה"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 30,
+    "prompt_he": "אנחנו שאלנו את החבר וישבנו",
+    "accepted_answers": "إحنا سألنا الصاحب وقعدنا",
+    "answer_he_tatiq": "אִחְנַא סַאַלְנַא אֵ(ל)צַّאחֵבּ וּקַעַדְנַא"
+  },
+  {
+    "lesson_id": 2,
+    "sentence_id": 31,
+    "prompt_he": "הם אכלו עגבנייה מהשולחן",
+    "accepted_answers": "هم أكلوا بندورة من الطاولة",
+    "answer_he_tatiq": "הֹםّ אַכְּלוּ בַּנְדוֹרַה מִן אֵ(ל)טַّאוְלֵה"
+  }
+]
 

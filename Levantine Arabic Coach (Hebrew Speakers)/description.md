@@ -1,0 +1,1 @@
+A structured Arabic speaking tutor for Hebrew speakers, focused on Palestinian Levantine Arabic.
